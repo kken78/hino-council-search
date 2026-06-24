@@ -12,6 +12,24 @@ const TEXT_DIR = join(__dirname, "../data/text");
 const MEET = join(DATA, "meetings.json");
 
 // 一般質問の質問者を議事日程から推定（best-effort）。
+// 会議冒頭「出席議員（N名）」名簿から 氏名→「N番」マップを作る。
+function buildSeatMap(raw) {
+  const map = {};
+  const start = raw.search(/出席議員[（(]/);
+  if (start < 0) return map;
+  const rest = raw.slice(start);
+  const endRel = rest.search(/欠席|遅刻|途中退席|[2２]．/);
+  const block = rest.slice(0, endRel > 0 ? endRel : 400);
+  const re = /([0-9０-９]+)\s*番\s*([^0-9０-９]+?)(?=[0-9０-９]+\s*番|$)/g;
+  let x;
+  while ((x = re.exec(block))) {
+    const no = x[1].replace(/[０-９]/g, d => "０１２３４５６７８９".indexOf(d)) + "番";
+    const name = x[2].replace(/[\s　・]/g, "").trim();
+    if (name.length >= 2 && name.length <= 6) map[name] = no;
+  }
+  return map;
+}
+
 function detectIppan(raw) {
   const head = raw.split(/会議の概要/)[0] || "";
   const i = head.indexOf("一般質問");
@@ -45,6 +63,7 @@ function run() {
       const txtPath = join(TEXT_DIR, key + ".txt");
       if (!existsSync(txtPath)) continue;
       const raw = readFileSync(txtPath, "utf8");
+      const seatMap = buildSeatMap(raw); // 氏名→「N番」（その日の名簿）
 
       for (const g of extractGian(raw)) if (!agendaMap.has(g.no)) agendaMap.set(g.no, g);
       for (const ip of detectIppan(raw)) if (!ippanMap.has(ip.member)) ippanMap.set(ip.member, ip);
@@ -57,7 +76,7 @@ function run() {
         index.push({
           sid: `${m.id}_${dateTag}_${String(i).padStart(4, "0")}`,
           meetingId: m.id, meeting: m.name, type: m.type, year: m.year, era: m.era,
-          date: pdf.date, pdf: pdf.url, role: s.role, name: s.name,
+          date: pdf.date, pdf: pdf.url, role: (/(^[0-9０-９]*番$|^番$)/.test(s.role) ? (seatMap[s.name] || s.role) : s.role), name: s.name,
           agendaRef: detectAgendaRef(s.text), text: s.text,
         });
       });
