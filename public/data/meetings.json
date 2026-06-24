@@ -1,0 +1,117 @@
+[
+  {
+    "id": "0000008582",
+    "name": "令和7年9月定例会議",
+    "type": "定例会",
+    "era": "令和7年",
+    "year": 2025,
+    "url": "https://www.town.shiga-hino.lg.jp/0000008582.html",
+    "pdfs": [
+      {
+        "label": "目次(PDFサイズ：157.96KB)",
+        "date": null,
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/7.9tmokuji.pdf"
+      },
+      {
+        "label": "第1日(9月1日)",
+        "date": "2025-09-01",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/20250901kaigiroku.pdf"
+      },
+      {
+        "label": "第2日(9月11日)",
+        "date": "2025-09-11",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/20250911kaigiroku.pdf"
+      },
+      {
+        "label": "第3日(9月12日)",
+        "date": "2025-09-12",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/20250912kaigiroku.pdf"
+      },
+      {
+        "label": "第4日(9月16日)",
+        "date": "2025-09-16",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/20250916kaigiroku.pdf"
+      },
+      {
+        "label": "第5日(9月26日)",
+        "date": "2025-09-26",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/20250926kaigiroku.pdf"
+      }
+    ]
+  },
+  {
+    "id": "0000008499",
+    "name": "令和7年7月臨時会議",
+    "type": "臨時会",
+    "era": "令和7年",
+    "year": 2025,
+    "url": "https://www.town.shiga-hino.lg.jp/0000008499.html",
+    "pdfs": [
+      {
+        "label": "目次(PDFサイズ：47.03KB)",
+        "date": null,
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8499/7.7rmokuji.pdf"
+      },
+      {
+        "label": "本文(PDFサイズ：446.30KB)",
+        "date": "2025-07-25",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8499/20250725kaigiroku.pdf"
+      }
+    ]
+  },
+  {
+    "id": "0000008489",
+    "name": "令和7年6月定例会議",
+    "type": "定例会",
+    "era": "令和7年",
+    "year": 2025,
+    "url": "https://www.town.shiga-hino.lg.jp/0000008489.html",
+    "pdfs": [
+      {
+        "label": "目次(サイズ：115.71KB)",
+        "date": null,
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8489/7.6mokuji.pdf"
+      },
+      {
+        "label": "第1日(6月2日)",
+        "date": "2025-06-02",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8489/20250602kaigiroku.pdf"
+      },
+      {
+        "label": "第2日(6月12日)",
+        "date": "2025-06-12",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8489/20250612kaigiroku.pdf"
+      },
+      {
+        "label": "第3日(6月13日)",
+        "date": "2025-06-13",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8489/20250613kaigiroku.pdf"
+      },
+      {
+        "label": "第4日(6月24日)",
+        "date": "2025-06-24",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8489/20250624kaigiroku.pdf"
+      }
+    ]
+  },
+  {
+    "id": "0000008413",
+    "name": "令和7年第3回（5月14日）臨時会会議録",
+    "type": "臨時会",
+    "era": "令和7年",
+    "year": 2025,
+    "url": "https://www.town.shiga-hino.lg.jp/0000008413.html",
+    "pdfs": [
+      {
+        "label": "目次.pdf(サイズ：75.68KB)",
+        "date": null,
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8413/7.5mokuji.pdf"
+      },
+      {
+        "label": "本文.pdf(サイズ：432.17KB)",
+        "date": "2025-05-14",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8413/20250514kaigiroku.pdf"
+      }
+    ]
+  }
+]

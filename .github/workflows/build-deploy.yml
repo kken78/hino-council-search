@@ -1,0 +1,43 @@
+name: build-deploy
+on:
+  schedule:
+    - cron: "0 0 * * 1"   # 毎週月曜（任意・新しい会議録の自動反映）
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - name: データ生成（巡回→抽出→索引）
+        run: npm run crawl && npm run extract && npm run index
+      - name: 生成AI付与・埋め込み（任意・失敗してもキーワード検索は動作）
+        run: npm run enrich && npm run embed
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
+        continue-on-error: true
+      - name: フロント生成（オフライン単一HTML＋オンラインfetch版）
+        run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: dist/online }   # オンライン版を配信。単一HTMLは dist/ にも生成済み
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.dep.outputs.page_url }}
+    steps:
+      - id: dep
+        uses: actions/deploy-pages@v4
