@@ -73,21 +73,6 @@ export function extractGian(raw) {
   const flat = raw.replace(/[\r\n]+/g, "");
   const head = flat.split(/会議の概要/)[0] || flat.slice(0, 8000);
   const items = new Map();
-  // 範囲議案「議第68号から議第74号まで（件名）について」を各号に展開（決算/予算の一括上程）
-  const rangeRe = /(議第|報第|議案第)\s*([0-9０-９]+)\s*号\s*から\s*(?:議第|報第|議案第)?\s*([0-9０-９]+)\s*号\s*まで\s*[（(]([^）)]*?)[）)]/g;
-  let rm;
-  while ((rm = rangeRe.exec(head))) {
-    const prefix = rm[1];
-    const from = parseInt(toHalf(rm[2]), 10);
-    const to = parseInt(toHalf(rm[3]), 10);
-    let base = (rm[4] || "").replace(/[\s　]+/g, "").slice(0, 80);
-    if (base && to >= from && to - from < 30) {
-      for (let n = from; n <= to; n++) {
-        const no = `${prefix}${n}号`;
-        if (!items.has(no)) items.set(no, { no, kind: guessKind(no + base), title: base });
-      }
-    }
-  }
   // 番号＋件名（次の 〃 / 日程第 / 別の議案番号 / 会議の概要 まで）
   const re = /(議第|報第|議案第|選第|諮第|発議第)\s*([0-9０-９]+)\s*号[\s　]*([^〃]*?)(?=〃|日程第|会議の概要|議第|報第|議案第|選第|諮第|発議第|$)/g;
   let m;
