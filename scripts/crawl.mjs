@@ -25,7 +25,12 @@ function guessDate(href, label, fallbackYear) {
   if (md && fallbackYear) return `${fallbackYear}-${String(md[1]).padStart(2,"0")}-${String(md[2]).padStart(2,"0")}`;
   return null;
 }
-const isMeetingHref = (h) => /\/0000\d{5,6}\.html$/.test(h);
+const DENY_IDS = new Set(["0000006723", "0000003025"]); // 地図案内・多言語切替（全ページ共通リンク）
+const isMeetingHref = (h) => {
+  if (!/^https?:\/\/[^/]+\/0000\d{5,6}\.html$/.test(h)) return false; // ドメイン直下の数値ページのみ（site_policy等を除外）
+  const id = (h.match(/0000\d{5,6}/) || [""])[0];
+  return !DENY_IDS.has(id);
+};
 const isCatHref = (h) => /category\/32-3-6-\d+/.test(h);
 const idOf = (url) => (url.match(/0000\d{5,6}/) || [null])[0] || (url.match(/(\d{4,6})\.html/)||[null,null])[1];
 
