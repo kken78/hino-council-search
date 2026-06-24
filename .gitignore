@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# 中間生成物（PDFキャッシュ）。テキストキャッシュと公開索引はコミット可。
+data/pdf/
+
+# ローカル確認用の生成物
+preview.html
+data/cache/

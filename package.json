@@ -1,0 +1,28 @@
+{
+  "name": "gikai-search",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "日野町議会 議事録横断検索システム（発言単位の全文検索・ノービルドの静的サイト／単一HTML配布）",
+  "license": "MIT",
+  "scripts": {
+    "crawl": "node scripts/crawl.mjs",
+    "extract": "node scripts/extract.mjs",
+    "index": "node scripts/index.mjs",
+    "split": "node scripts/index.mjs",
+    "enrich": "node scripts/enrich.mjs",
+    "embed": "node scripts/embed.mjs",
+    "candidates": "node scripts/dict-candidates.mjs",
+    "build": "node scripts/build.mjs",
+    "build:data": "npm run crawl && npm run extract && npm run index",
+    "preview": "node scripts/build-preview.mjs"
+  },
+  "devDependencies": {
+    "cheerio": "^1.0.0",
+    "pdfjs-dist": "^4.6.82"
+  },
+  "optionalDependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@xenova/transformers": "^2.17.2"
+  }
+}

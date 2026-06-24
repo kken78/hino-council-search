@@ -1,0 +1,721 @@
+[
+  {
+    "id": "0000008692",
+    "name": "令和8年1月臨時会議",
+    "year": 2026,
+    "era": "令和8年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008692.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000008691",
+    "name": "令和7年12月定例会議",
+    "year": 2025,
+    "era": "令和7年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008691.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000008582",
+    "name": "令和7年9月定例会議",
+    "year": 2025,
+    "era": "令和7年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008582.html",
+    "indexed": false,
+    "pdfs": [
+      {
+        "label": "目次(PDFサイズ：157.96KB)",
+        "date": null,
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/7.9tmokuji.pdf"
+      },
+      {
+        "label": "第1日(9月1日)",
+        "date": "2025-09-01",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/20250901kaigiroku.pdf"
+      },
+      {
+        "label": "第2日(9月11日)",
+        "date": "2025-09-11",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/20250911kaigiroku.pdf"
+      },
+      {
+        "label": "第3日(9月12日)",
+        "date": "2025-09-12",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/20250912kaigiroku.pdf"
+      },
+      {
+        "label": "第4日(9月16日)",
+        "date": "2025-09-16",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/20250916kaigiroku.pdf"
+      },
+      {
+        "label": "第5日(9月26日)",
+        "date": "2025-09-26",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8582/20250926kaigiroku.pdf"
+      }
+    ]
+  },
+  {
+    "id": "0000008499",
+    "name": "令和7年7月臨時会議",
+    "year": 2025,
+    "era": "令和7年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008499.html",
+    "indexed": true,
+    "pdfs": [
+      {
+        "label": "目次(PDFサイズ：47.03KB)",
+        "date": null,
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8499/7.7rmokuji.pdf"
+      },
+      {
+        "label": "本文(PDFサイズ：446.30KB)",
+        "date": "2025-07-25",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8499/20250725kaigiroku.pdf"
+      }
+    ]
+  },
+  {
+    "id": "0000008489",
+    "name": "令和7年6月定例会議",
+    "year": 2025,
+    "era": "令和7年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008489.html",
+    "indexed": true,
+    "pdfs": [
+      {
+        "label": "目次(サイズ：115.71KB)",
+        "date": null,
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8489/7.6mokuji.pdf"
+      },
+      {
+        "label": "第1日(6月2日)",
+        "date": "2025-06-02",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8489/20250602kaigiroku.pdf"
+      },
+      {
+        "label": "第2日(6月12日)",
+        "date": "2025-06-12",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8489/20250612kaigiroku.pdf"
+      },
+      {
+        "label": "第3日(6月13日)",
+        "date": "2025-06-13",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8489/20250613kaigiroku.pdf"
+      },
+      {
+        "label": "第4日(6月24日)",
+        "date": "2025-06-24",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8489/20250624kaigiroku.pdf"
+      }
+    ]
+  },
+  {
+    "id": "0000008413",
+    "name": "令和7年第3回（5月14日）臨時会会議録",
+    "year": 2025,
+    "era": "令和7年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008413.html",
+    "indexed": true,
+    "pdfs": [
+      {
+        "label": "目次.pdf(サイズ：75.68KB)",
+        "date": null,
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8413/7.5mokuji.pdf"
+      },
+      {
+        "label": "本文.pdf(サイズ：432.17KB)",
+        "date": "2025-05-14",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8413/20250514kaigiroku.pdf"
+      }
+    ]
+  },
+  {
+    "id": "0000008397",
+    "name": "令和7年第2回（3月）定例会会議録",
+    "year": 2025,
+    "era": "令和7年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008397.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000008210",
+    "name": "令和7年第1回（2月3日）臨時会会議録",
+    "year": 2025,
+    "era": "令和7年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008210.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000008211",
+    "name": "令和6年第7回（12月）定例会会議録",
+    "year": 2024,
+    "era": "令和6年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008211.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000008116",
+    "name": "令和6年第6回（9月）定例会会議録",
+    "year": 2024,
+    "era": "令和6年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008116.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007925",
+    "name": "令和6年第5回（7月16日）臨時会会議録",
+    "year": 2024,
+    "era": "令和6年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007925.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007924",
+    "name": "令和6年第4回（6月）定例会会議録",
+    "year": 2024,
+    "era": "令和6年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007924.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007862",
+    "name": "令和6年第3回（5月16日）臨時会会議録",
+    "year": 2024,
+    "era": "令和6年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007862.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007861",
+    "name": "令和6年第2回（3月）定例会会議録",
+    "year": 2024,
+    "era": "令和6年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007861.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007570",
+    "name": "令和6年第1回（2月5日）臨時会会議録",
+    "year": 2024,
+    "era": "令和6年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007570.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007562",
+    "name": "令和5年第8回（12月）定例会会議録",
+    "year": 2023,
+    "era": "令和5年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007562.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007386",
+    "name": "令和5年第7回（11月13日）臨時会会議録",
+    "year": 2023,
+    "era": "令和5年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007386.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007383",
+    "name": "令和5年第6回（9月）定例会会議録",
+    "year": 2023,
+    "era": "令和5年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007383.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007220",
+    "name": "令和5年第5回（6月）定例会会議録",
+    "year": 2023,
+    "era": "令和5年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007220.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007193",
+    "name": "令和5年第4回（5月15日）臨時会会議録",
+    "year": 2023,
+    "era": "令和5年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007193.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007192",
+    "name": "令和5年第3回（3月29日）臨時会会議録",
+    "year": 2023,
+    "era": "令和5年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007192.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000007191",
+    "name": "令和5年第2回（3月）定例会会議録",
+    "year": 2023,
+    "era": "令和5年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000007191.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006960",
+    "name": "令和5年第1回（1月23日）臨時会会議録",
+    "year": 2023,
+    "era": "令和5年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006960.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006923",
+    "name": "令和4年第8回（12月）定例会会議録",
+    "year": 2022,
+    "era": "令和4年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006923.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006802",
+    "name": "令和4年第7回（11月4日）臨時会会議録",
+    "year": 2022,
+    "era": "令和4年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006802.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006801",
+    "name": "令和4年第6回（9月）定例会会議録",
+    "year": 2022,
+    "era": "令和4年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006801.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006666",
+    "name": "令和4年第5回（8月9日）臨時会会議録",
+    "year": 2022,
+    "era": "令和4年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006666.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006665",
+    "name": "令和4年第4回（6月）定例会会議録",
+    "year": 2022,
+    "era": "令和4年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006665.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006519",
+    "name": "令和4年第3回（5月27日）臨時会会議録",
+    "year": 2022,
+    "era": "令和4年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006519.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006505",
+    "name": "令和4年第2回（3月）定例会会議録",
+    "year": 2022,
+    "era": "令和4年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006505.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006377",
+    "name": "令和4年第1回（2月2日）臨時会会議録",
+    "year": 2022,
+    "era": "令和4年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006377.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006376",
+    "name": "令和3年第8回（12月）定例会会議録",
+    "year": 2021,
+    "era": "令和3年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006376.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006243",
+    "name": "令和3年第7回（11月29日）臨時会会議録",
+    "year": 2021,
+    "era": "令和3年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006243.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006242",
+    "name": "令和3年第6回（9月）定例会会議録",
+    "year": 2021,
+    "era": "令和3年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006242.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006020",
+    "name": "令和3年第5回（8月4日）臨時会会議録",
+    "year": 2021,
+    "era": "令和3年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006020.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000006019",
+    "name": "令和3年第4回（6月）定例会会議録",
+    "year": 2021,
+    "era": "令和3年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000006019.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000005879",
+    "name": "令和3年第3回（5月17日）臨時会会議録",
+    "year": 2021,
+    "era": "令和3年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000005879.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000005878",
+    "name": "令和3年第2回（3月）定例会会議録",
+    "year": 2021,
+    "era": "令和3年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000005878.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000005613",
+    "name": "令和3年第1回（2月10日）臨時会会議録",
+    "year": 2021,
+    "era": "令和3年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000005613.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000005598",
+    "name": "令和2年第7回（12月）定例会会議録",
+    "year": 2020,
+    "era": "令和2年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000005598.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000005484",
+    "name": "令和2年第6回（11月27日）臨時会会議録",
+    "year": 2020,
+    "era": "令和2年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000005484.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000005483",
+    "name": "令和2年第5回（9月）定例会会議録",
+    "year": 2020,
+    "era": "令和2年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000005483.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000005278",
+    "name": "令和2年第4回（7月27日）臨時会会議録",
+    "year": 2020,
+    "era": "令和2年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000005278.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000005277",
+    "name": "令和2年第3回（6月）定例会会議録",
+    "year": 2020,
+    "era": "令和2年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000005277.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000005198",
+    "name": "令和2年第2回（5月15日）臨時会会議録",
+    "year": 2020,
+    "era": "令和2年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000005198.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000005197",
+    "name": "令和2年第1回（3月）定例会会議録",
+    "year": 2020,
+    "era": "令和2年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000005197.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004919",
+    "name": "令和元年第5回（12月）定例会会議録",
+    "year": 2019,
+    "era": "令和元年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004919.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004786",
+    "name": "令和元年第4回（9月）定例会会議録",
+    "year": 2019,
+    "era": "令和元年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004786.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004662",
+    "name": "令和元年第3回（6月）定例会会議録",
+    "year": 2019,
+    "era": "令和元年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004662.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004568",
+    "name": "令和元年第2回（5月15日）臨時会会議録",
+    "year": 2019,
+    "era": "令和元年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004568.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004567",
+    "name": "平成31年第1回（3月）定例会会議録",
+    "year": 2019,
+    "era": "平成31年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004567.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004466",
+    "name": "平成30年第7回（12月）定例会会議録",
+    "year": 2018,
+    "era": "平成30年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004466.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004366",
+    "name": "平成30年第6回（11月5日）臨時会会議録",
+    "year": 2018,
+    "era": "平成30年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004366.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004365",
+    "name": "平成30年第5回（9月）定例会会議録",
+    "year": 2018,
+    "era": "平成30年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004365.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004268",
+    "name": "平成30年第4回（8月22日）臨時会会議録",
+    "year": 2018,
+    "era": "平成30年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004268.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004267",
+    "name": "平成30年第3回（6月）定例会会議録",
+    "year": 2018,
+    "era": "平成30年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004267.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004167",
+    "name": "平成30年第2回（3月）定例会会議録",
+    "year": 2018,
+    "era": "平成30年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004167.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004165",
+    "name": "平成30年第1回（2月16日）臨時会会議録",
+    "year": 2018,
+    "era": "平成30年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004165.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000004059",
+    "name": "平成29年第6回（12月）定例会会議録",
+    "year": 2017,
+    "era": "平成29年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000004059.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000003977",
+    "name": "平成29年第5回（9月）定例会会議録",
+    "year": 2017,
+    "era": "平成29年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000003977.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000003925",
+    "name": "平成29年第4回（8月7日）臨時会会議録",
+    "year": 2017,
+    "era": "平成29年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000003925.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000003924",
+    "name": "平成29年第3回（6月）定例会会議録",
+    "year": 2017,
+    "era": "平成29年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000003924.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000003852",
+    "name": "平成29年第2回（5月15日）臨時会会議録",
+    "year": 2017,
+    "era": "平成29年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000003852.html",
+    "indexed": false,
+    "pdfs": []
+  },
+  {
+    "id": "0000003851",
+    "name": "平成29年第1回（3月）定例会会議録",
+    "year": 2017,
+    "era": "平成29年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000003851.html",
+    "indexed": false,
+    "pdfs": []
+  }
+]
