@@ -67,6 +67,43 @@ const KIND = [
 ];
 export const guessKind = (t) => (KIND.find(([, re]) => re.test(t)) || ["その他"])[0];
 
+// 目次PDFのテキストから 議案番号→正式件名 を抽出する（最も正確なソース）。
+// 形式: 「目 次…第１号（…）…１．議第◯号 件名 ……… ページ」
+export function extractGianFromToc(tocRaw) {
+  const map = {};
+  if (!tocRaw) return map;
+  const items = tocRaw.split(/(?=１．)/);
+  for (let seg of items) {
+    seg = seg.replace(/[\r\n]+/g, "");
+    const m = seg.match(/^１．\s*(議第|報第|議案第|選第|諮第|発議第|決議案第)\s*([0-9０-９]+)\s*号\s*(.+)/);
+    if (!m) continue;
+    const no = `${m[1]}${toHalf(m[2])}号`;
+    let title = m[3]
+      .replace(/[…‥]+.*$/, "")
+      .replace(/[0-9０-９]+[－-][0-9０-９]+.*$/, "")
+      .replace(/〔.*$/, "")
+      .replace(/[\s　]/g, "").trim();
+    if (/^から/.test(title) || title.length < 3) continue; // 範囲見出し・短すぎは除外
+    if (!(no in map)) map[no] = title; // 最初の出現＝上程時の正式件名
+  }
+  // 範囲一括上程「議第◯号から□号まで（件名）」を、個別件名が無い号にだけ補完
+  const flat = tocRaw.replace(/[\r\n]+/g, "");
+  const rangeRe = /(議第|報第|議案第)\s*([0-9０-９]+)\s*号\s*から\s*(?:議第|報第|議案第)?\s*([0-9０-９]+)\s*号\s*まで\s*[（(]([^）)…‥]*)/g;
+  let r;
+  while ((r = rangeRe.exec(flat))) {
+    const prefix = r[1];
+    const from = parseInt(toHalf(r[2]), 10);
+    const to = parseInt(toHalf(r[3]), 10);
+    const base = (r[4] || "").replace(/[\s　]/g, "").trim();
+    if (!base || to < from || to - from > 30) continue;
+    for (let n = from; n <= to; n++) {
+      const no = `${prefix}${n}号`;
+      if (!(no in map)) map[no] = base; // 個別件名がある号は触らない
+    }
+  }
+  return map;
+}
+
 // 議事日程の見出しから議案を抽出。{no, kind, title}[]。
 export function extractGian(raw) {
   // 改行を除去して件名が行で途切れないようにし、議事日程（「会議の概要」前）を対象にする。

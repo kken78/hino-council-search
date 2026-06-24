@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { splitSpeeches, extractGian, detectAgendaRef } from "./lib/speech.mjs";
+import { splitSpeeches, extractGian, extractGianFromToc, detectAgendaRef, guessKind } from "./lib/speech.mjs";
 import { textKey } from "./lib/keys.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,6 +58,16 @@ function run() {
     const agendaMap = new Map();
     const ippanMap = new Map();
 
+    // 目次PDFから正式な議案件名マップを作る（最も正確なソース）
+    const tocTitles = {};
+    for (const pdf of m.pdfs) {
+      if (!/mokuji|目次/i.test(pdf.url + " " + (pdf.label || ""))) continue;
+      const tkey = textKey(m.id, pdf);
+      const tpath = join(TEXT_DIR, tkey + ".txt");
+      if (!existsSync(tpath)) continue;
+      Object.assign(tocTitles, extractGianFromToc(readFileSync(tpath, "utf8")));
+    }
+
     for (const pdf of m.pdfs) {
       const key = textKey(m.id, pdf);
       const txtPath = join(TEXT_DIR, key + ".txt");
@@ -81,7 +91,21 @@ function run() {
         });
       });
     }
-    gian[m.id] = { agenda: [...agendaMap.values()], ippan: [...ippanMap.values()] };
+    // 目次の件名で上書き（目次が正）＋目次にしかない議案を追加。区分も正しい件名で再判定。
+    for (const no in tocTitles) {
+      const title = tocTitles[no];
+      agendaMap.set(no, { no, kind: guessKind(no + title), title });
+    }
+    // 決議の番号表記ゆれを統合：決議案第◯号があれば、同一件名の議第◯号/議案第◯号を除去
+    const decTitles = new Set([...agendaMap.values()].filter(x=>/^決議案第/.test(x.no)).map(x=>x.title));
+    for (const [no, x] of [...agendaMap]) {
+      if (/^(議第|議案第)/.test(no) && decTitles.has(x.title)) agendaMap.delete(no);
+    }
+    const agenda = [...agendaMap.values()].sort((a, b) => {
+      const n = x => parseInt(String(x.no).replace(/\D/g, ""), 10) || 0;
+      return n(a) - n(b);
+    });
+    gian[m.id] = { agenda, ippan: [...ippanMap.values()] };
   }
 
   mkdirSync(DATA, { recursive: true });
