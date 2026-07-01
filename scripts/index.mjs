@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { splitSpeeches, extractGian, extractGianFromToc, detectAgendaRef, guessKind } from "./lib/speech.mjs";
 import { textKey } from "./lib/keys.mjs";
+import { buildNormStr } from "./lib/normalize.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dirname, "../public/data");
@@ -87,7 +88,7 @@ function run() {
           sid: `${m.id}_${dateTag}_${String(i).padStart(4, "0")}`,
           meetingId: m.id, meeting: m.name, type: m.type, year: m.year, era: m.era,
           date: pdf.date, pdf: pdf.url, role: (/(^[0-9０-９]*番$|^番$)/.test(s.role) ? (seatMap[s.name] || s.role) : s.role), name: s.name,
-          agendaRef: detectAgendaRef(s.text), text: s.text,
+          agendaRef: detectAgendaRef(s.text), text: s.text, norm: buildNormStr(s.text),
         });
       });
     }

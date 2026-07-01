@@ -37,4 +37,16 @@ export function normTerm(t) {
   return r;
 }
 
+// 検索照合用：正規化“文字列だけ”（map不要・軽量）。
+// index.mjs でビルド時に各発言へ rec.norm = buildNormStr(rec.text) として格納する。
+// フロント側 buildNormStr と同一ルール（SKIP＋variants＋NFKC＋小文字化）である必要がある。
+export function buildNormStr(str) {
+  let norm = "";
+  for (let i = 0; i < str.length; i++) {
+    if (SKIP.test(str[i])) continue;
+    for (const cc of normChar(str[i])) norm += cc;
+  }
+  return norm;
+}
+
 export { variants, SKIP };

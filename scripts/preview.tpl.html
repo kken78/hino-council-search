@@ -132,6 +132,8 @@ const PAGE=20; let page=0, curResults=[], curPosAlts=[];
 const SKIP=/[\s　、，,・･\-－―ー~〜]/;
 const normChar=c=>(variants[c]??c).normalize("NFKC").toLowerCase();
 function buildNorm(str){let n="";const map=[];for(let i=0;i<str.length;i++){if(SKIP.test(str[i]))continue;for(const cc of normChar(str[i])){n+=cc;map.push(i);}}return{norm:n,map};}
+// 照合用：正規化“文字列だけ”（map を作らないので軽い）。ハイライト時のみ buildNorm を使う。
+function buildNormStr(str){let n="";for(let i=0;i<str.length;i++){if(SKIP.test(str[i]))continue;for(const cc of normChar(str[i]))n+=cc;}return n;}
 function normTerm(t){let r="";for(const c of t)if(!SKIP.test(c))r+=normChar(c);return r;}
 const ERAS=[{name:"令和",alpha:"r",base:2018,start:2019},{name:"平成",alpha:"h",base:1988,start:1989},{name:"昭和",alpha:"s",base:1925,start:1926}];
 const eraToYear=(n,k)=>{const e=ERAS.find(x=>x.name===n||x.alpha===String(n).toLowerCase());return e?e.base+k:null;};
@@ -145,11 +147,13 @@ const yomiIndex=new Map();for(const[k,v]of Object.entries(yomi))yomiIndex.set(no
 function expandTerm(term){const base=normTerm(term);const alts=new Set([base]);if(synIndex.has(base))for(const a of synIndex.get(base))alts.add(a);if(yomiIndex.has(base))alts.add(yomiIndex.get(base));const y=expandYear(term);if(y)for(const t of y.terms)alts.add(normTerm(t));return[...alts].filter(Boolean);}
 function parseQuery(q){const groups=[];let cur=[];for(const tok of q.split(/\s+/).filter(Boolean)){if(/^(OR|or|｜|\|)$/.test(tok)){if(cur.length)groups.push(cur);cur=[];continue;}const neg=/^[-－]/.test(tok);const term=neg?tok.slice(1):tok;if(!term)continue;cur.push({neg,alts:expandTerm(term)});}if(cur.length)groups.push(cur);return groups;}
 const incAny=(n,alts)=>alts.some(a=>a&&n.includes(a));
-function ensureNorm(e){if(!e._n)e._n=buildNorm(e.text||"");return e._n;}
-function matchGroup(norm,g){let hits=0;for(const t of g){const f=incAny(norm.norm,t.alts);if(t.neg){if(f)return null;}else{if(!f)return null;for(const a of t.alts){if(!a)continue;let idx=norm.norm.indexOf(a),c=0;while(idx!==-1){c++;idx=norm.norm.indexOf(a,idx+a.length);}if(c){hits+=c;break;}}}}return hits;}
-function hitRanges(e,posAlts){const{norm,map}=ensureNorm(e);const rs=[];for(const a of posAlts){if(!a)continue;let idx=norm.indexOf(a);while(idx!==-1){rs.push([map[idx],map[idx+a.length-1]+1]);idx=norm.indexOf(a,idx+a.length);}}rs.sort((x,y)=>x[0]-y[0]);const m=[];for(const r of rs){const l=m[m.length-1];if(l&&r[0]<=l[1])l[1]=Math.max(l[1],r[1]);else m.push([...r]);}return m;}
+// 照合用ノルム：ビルド時に付与された e.norm を最優先。無ければ一度だけ文字列化してキャッシュ（map は作らない）。
+function matchNorm(e){return e.norm||e._nm||(e._nm=buildNormStr(e.text||""));}
+function matchGroup(ns,g){let hits=0;for(const t of g){const f=incAny(ns,t.alts);if(t.neg){if(f)return null;}else{if(!f)return null;for(const a of t.alts){if(!a)continue;let idx=ns.indexOf(a),c=0;while(idx!==-1){c++;idx=ns.indexOf(a,idx+a.length);}if(c){hits+=c;break;}}}}return hits;}
+// ハイライトは表示中の20件だけ。ここでのみ map 付きの buildNorm を都度計算する（軽い）。
+function hitRanges(e,posAlts){const{norm,map}=buildNorm(e.text||"");const rs=[];for(const a of posAlts){if(!a)continue;let idx=norm.indexOf(a);while(idx!==-1){rs.push([map[idx],map[idx+a.length-1]+1]);idx=norm.indexOf(a,idx+a.length);}}rs.sort((x,y)=>x[0]-y[0]);const m=[];for(const r of rs){const l=m[m.length-1];if(l&&r[0]<=l[1])l[1]=Math.max(l[1],r[1]);else m.push([...r]);}return m;}
 function roleCat(e){const r=e.role||"";if(/議長/.test(r))return"議長";if(/^[0-9０-９]+番$/.test(r))return"議員";if(r)return"当局";return"";}
-function search(idx,query,f){const groups=query.trim()?parseQuery(query):[];const posAlts=[...new Set(groups.flat().filter(t=>!t.neg).flatMap(t=>t.alts))];const out=[];const ms=new Set();let total=0;for(const e of idx){if(f.meeting&&e.meetingId!==f.meeting)continue;if(f.role&&roleCat(e)!==f.role)continue;if(f.type&&e.type!==f.type)continue;if(f.speaker&&!((e.name||"").includes(f.speaker)||(e.role||"").includes(f.speaker)))continue;let score=0;if(groups.length){const norm=ensureNorm(e);let mt=false;for(const g of groups){const h=matchGroup(norm,g);if(h!==null){mt=true;score=Math.max(score,h);}}if(!mt)continue;}out.push({e,score});ms.add(e.meetingId);total+=score;}return{out,meetingCount:ms.size,hitCount:total,posAlts};}
+function search(idx,query,f){const groups=query.trim()?parseQuery(query):[];const posAlts=[...new Set(groups.flat().filter(t=>!t.neg).flatMap(t=>t.alts))];const out=[];const ms=new Set();let total=0;for(const e of idx){if(f.meeting&&e.meetingId!==f.meeting)continue;if(f.role&&roleCat(e)!==f.role)continue;if(f.type&&e.type!==f.type)continue;if(f.speaker&&!((e.name||"").includes(f.speaker)||(e.role||"").includes(f.speaker)))continue;let score=0;if(groups.length){const ns=matchNorm(e);let mt=false;for(const g of groups){const h=matchGroup(ns,g);if(h!==null){mt=true;score=Math.max(score,h);}}if(!mt)continue;}out.push({e,score});ms.add(e.meetingId);total+=score;}return{out,meetingCount:ms.size,hitCount:total,posAlts};}
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
@@ -200,7 +204,7 @@ $("#results").addEventListener("click",ev=>{
 });
 $("#freq").addEventListener("click",ev=>{const b=ev.target.closest("[data-q]");if(b){$("#q").value=b.dataset.q;render();}});
 $("#sform").addEventListener("submit",e=>{e.preventDefault();render();});
-$("#q").addEventListener("input",render);
+let _qT;$("#q").addEventListener("input",()=>{clearTimeout(_qT);_qT=setTimeout(render,180);});
 ["#fMeeting","#fSpeaker","#fRole","#fType","#fSort"].forEach(s=>$(s).addEventListener("input",render));
 
 function renderGian(){const ms=meetings.filter(m=>gian[m.id]&&(gian[m.id].agenda.length||gian[m.id].ippan.length));$("#gianView").innerHTML=ms.map(m=>{const g=gian[m.id];let t='<section class="gcard"><h3 class="mincho">'+esc(m.name)+' <span class="tag">'+m.type+'</span> <span class="small">'+(m.era||m.year)+'</span></h3>';t+='<div class="gsec">議案（'+g.agenda.length+'件）</div>';if(g.agenda.length){t+='<div class="tablewrap"><table><thead><tr><th style="width:90px">議案番号</th><th style="width:70px">区分</th><th>件名</th></tr></thead><tbody>'+g.agenda.map(a=>'<tr><td data-label="議案番号">'+a.no+'</td><td data-label="区分"><span class="tag kindtag">'+a.kind+'</span></td><td data-label="件名">'+esc(a.title)+'</td></tr>').join("")+'</tbody></table></div>';}else t+='<div class="empty">議案の抽出はありません。</div>';if(g.ippan&&g.ippan.length){t+='<div class="gsec">一般質問（'+g.ippan.length+'名）</div><div class="ippanbox"><span class="small">質問者をクリックすると、その議員の発言を検索します</span><div style="margin-top:4px">'+g.ippan.map(ip=>'<button type="button" class="chip" data-spk2="'+esc(ip.member)+'">'+esc(ip.member)+'</button>').join("")+'</div></div>';}return t+'</section>';}).join("")||'<div class="empty">議案データがありません。</div>';
