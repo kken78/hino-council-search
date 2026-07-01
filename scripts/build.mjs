@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { textKey } from "./lib/keys.mjs";
+import { buildNormStr } from "./lib/normalize.mjs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const R = (p) => readFileSync(join(root, p), "utf8");
@@ -36,6 +37,10 @@ if (process.env.HINO_BUNDLE_PDF) {
   for (const t of big.toc) for (const pdf of (t.pdfs || [])) if (map.has(pdf.url)) pdf.url = map.get(pdf.url);
   console.log("PDF同梱: " + n + " 件を相対パス化");
 }
+
+// 配信・配布物にだけ norm を付与（リポジトリの public/data/index.json は norm 無しで軽く保つ）。
+// 実行時の正規化ゼロ＝初回検索を即応答に。フロントは e.norm があればそれを使う。
+for (const e of big.index) if (e.norm == null) e.norm = buildNormStr(e.text || "");
 
 let tpl = R("scripts/preview.tpl.html");
 tpl = tpl.replace(/<div class="note">[\s\S]*?<\/div>\n/, "")
