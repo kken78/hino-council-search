@@ -1,5 +1,5 @@
 // build-preview.mjs — 開発確認用の単体プレビュー（索引データ内蔵）を preview.html に生成。
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { buildNormStr } from "./lib/normalize.mjs";
@@ -12,6 +12,7 @@ const data = {
   gian: J("public/data/gian.json"), toc: J("public/data/toc.json"),
   topics: J("dict/topics.json"),
   dict: { variants: J("dict/variants.json"), synonyms: J("dict/synonyms.json"), yomi: J("dict/yomi.json") },
+  highlights: existsSync(join(root, "public/data/highlights.json")) ? J("public/data/highlights.json") : null,
 };
 // ローカル preview.html にも norm を付与（初回検索を即応答に）。リポジトリの index.json は変更しない。
 for (const e of data.index) if (e.norm == null) e.norm = buildNormStr(e.text || "");
