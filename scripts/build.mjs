@@ -13,7 +13,7 @@ const R = (p) => readFileSync(join(root, p), "utf8");
 const J = (p) => JSON.parse(R(p));
 
 const big = { meetings: J("public/data/meetings.json"), index: J("public/data/index.json"), gian: J("public/data/gian.json"), toc: J("public/data/toc.json") };
-const small = { topics: J("dict/topics.json"), dict: { variants: J("dict/variants.json"), synonyms: J("dict/synonyms.json"), yomi: J("dict/yomi.json") } };
+const small = { topics: J("dict/topics.json"), dict: { variants: J("dict/variants.json"), synonyms: J("dict/synonyms.json"), yomi: J("dict/yomi.json") }, highlights: existsSync(join(root, "public/data/highlights.json")) ? J("public/data/highlights.json") : null };
 
 mkdirSync(join(root, "dist"), { recursive: true });
 mkdirSync(join(root, "dist/online/data"), { recursive: true });
@@ -52,10 +52,10 @@ const allData = { ...big, ...small };
 writeFileSync(join(root, "dist/日野町議会-会議録検索.html"), tpl.replace("/*__BOOT__*/", "start(" + JSON.stringify(allData) + ");"));
 
 // 2) オンライン用：dict/topics内蔵＋大きいJSONはfetch
-const boot = "const DICT=" + JSON.stringify(small.dict) + ";const TOPICS=" + JSON.stringify(small.topics) + ";"
+const boot = "const DICT=" + JSON.stringify(small.dict) + ";const TOPICS=" + JSON.stringify(small.topics) + ";const HL=" + JSON.stringify(small.highlights) + ";"
   + "(async function(){try{const B=new URL('.',location.href).href;"
   + "const [index,gian,toc,meetings]=await Promise.all(['data/index.json','data/gian.json','data/toc.json','data/meetings.json'].map(p=>fetch(B+p).then(r=>r.json())));"
-  + "start({index,gian,toc,meetings,dict:DICT,topics:TOPICS});"
+  + "start({index,gian,toc,meetings,dict:DICT,topics:TOPICS,highlights:HL});"
   + "}catch(e){document.getElementById('results').innerHTML='<div class=\"empty\">データの読み込みに失敗しました（'+e+'）。ローカルで開く場合は単一HTML版をご利用ください。</div>';}})();";
 writeFileSync(join(root, "dist/online/index.html"), tpl.replace("/*__BOOT__*/", boot));
 for (const f of ["index.json", "gian.json", "toc.json", "meetings.json"]) writeFileSync(join(root, "dist/online/data", f), JSON.stringify(big[f.replace(".json", "")]));
