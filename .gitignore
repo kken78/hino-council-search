@@ -9,3 +9,6 @@ data/pdf/
 # ローカル確認用の生成物
 preview.html
 data/cache/
+
+# ローカル閲覧用にDLした会議録PDF（数百MB・コミットしない）
+議事録本体/

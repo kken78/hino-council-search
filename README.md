@@ -156,10 +156,10 @@ gikai-search/
 ├─ dict/                                   # 辞書（手で育てる）
 │  ├─ yomi.json / synonyms.json / variants.json
 │  └─ topics.json        # 分野クイック検索（頻出テーマ→OR検索）
-├─ data/                                   # 中間生成物（gitignore対象は pdf/）
-│  ├─ pdf/               # ダウンロードPDF（キャッシュ）
-│  ├─ text/              # 抽出テキスト
-│  └─ cache/pages/       # offline用ページキャッシュ
+├─ data/                                   # 中間生成物（.gitignore: pdf/ と cache/。text/ はコミット可）
+│  ├─ pdf/               # ダウンロードPDF（キャッシュ・.gitignore）
+│  ├─ text/              # 抽出テキスト（コミット可）
+│  └─ cache/             # offline用ページキャッシュ（.gitignore）
 ├─ public/data/                            # 公開する索引（フロントが読む・コミット対象）
 │  ├─ meetings.json      # 全文索引対象の会議
 │  ├─ toc.json           # 年度別カタログ（全会議の目次）
@@ -539,7 +539,7 @@ package.json（抜粋）
   } }
 ```
 
-> `議事録本体/`・`preview.html`・`dist/` は `.gitignore` 対象（生成物・大容量PDFはコミットしない）。`public/data/*.json`（`index.json`・`highlights.json`・`meeting_pages.json` 等）はコミットして配信する。
+> `.gitignore` 対象：`node_modules/`・`dist/`・`preview.html`・`data/pdf/`・`data/cache/`・`議事録本体/`（生成物・キャッシュ・大容量PDFはコミットしない）。`data/text/`（抽出テキスト）と `public/data/*.json`（`index.json`・`highlights.json`・`meeting_pages.json` 等）は**コミットして配信**する。
 
 ---
 
