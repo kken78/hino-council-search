@@ -1,0 +1,12 @@
+# 依存の更新を PR で知らせる（PDF抽出・HTML解析のライブラリ、GitHub Actions）
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

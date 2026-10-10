@@ -59,10 +59,14 @@ const boot = "const DICT=" + JSON.stringify(small.dict) + ";const TOPICS=" + JSO
   + "(async function(){try{const B=new URL('.',location.href).href;"
   + "const J=p=>fetch(B+p).then(r=>{if(!r.ok)throw new Error(p+' '+r.status);return r.json();});"
   + "const man=await J('data/index-manifest.json');"
-  + "const [shards,gian,toc,meetings]=await Promise.all([Promise.all(man.shards.map(s=>J('data/'+s.file))),J('data/gian.json'),J('data/toc.json'),J('data/meetings.json')]);"
+  // 直近2年分を先に読み込んで画面を出し、残りの年は並列で取得して後から追加する（スマホでもすぐ検索できるように）
+  + "const N=Math.min(2,man.shards.length),first=man.shards.slice(0,N),rest=man.shards.slice(N);"
+  + "const [shards,gian,toc,meetings]=await Promise.all([Promise.all(first.map(s=>J('data/'+s.file))),J('data/gian.json'),J('data/toc.json'),J('data/meetings.json')]);"
   + "const index=shards.flat();"
+  + "const loading=rest.length?{from:first[first.length-1].year,loaded:N,total:man.shards.length,done:false}:null;"
   + "const proceedings=await fetch(B+'data/proceedings.json').then(r=>r.ok?r.json():null).catch(()=>null);"
-  + "start({index,gian,toc,meetings,proceedings,dict:DICT,topics:TOPICS,highlights:HL,pages:PAGES});"
+  + "const app=start({index,gian,toc,meetings,proceedings,dict:DICT,topics:TOPICS,highlights:HL,pages:PAGES,loading});"
+  + "if(rest.length){const more=await Promise.all(rest.map(s=>J('data/'+s.file)));app.addIndex(more.flat(),{loaded:man.shards.length,done:true});}"
   + "}catch(e){document.getElementById('results').innerHTML='<div class=\"empty\">データの読み込みに失敗しました（'+e+'）。ローカルで開く場合は単一HTML版をご利用ください。</div>';}})();";
 writeFileSync(join(root, "dist/online/index.html"), tpl.replace("/*__BOOT__*/", boot));
 writeIndex(join(root, "dist/online/data"), big.index);

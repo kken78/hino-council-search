@@ -157,6 +157,7 @@ footer{margin:34px 0 16px;font-size:11.5px;color:var(--slate);border-top:1px sol
       <label class="fcol">並び<select id="fSort"><option value="date">新しい会議順</option><option value="relevance">関連度</option></select></label>
     </div>
   </div>
+  <div id="loadnote" class="note" role="status" aria-live="polite" hidden></div>
   <div id="mbanner"></div>
   <div id="meta"></div>
   <div id="results"></div>
@@ -214,7 +215,9 @@ const posOf=new Map();index.forEach((e,k)=>posOf.set(e.sid,k));
 const segByFrom=new Map();
 const isChairRole=r=>/議長$/.test(r||"");
 const voteBySid=new Map();
-if(proceedings){for(const mid in proceedings)for(const sg of proceedings[mid].segments){if(sg.kind==="vote"){const k=posOf.get(sg.sid);if(k!=null){sg._a=sg._b=k;sg._mid=mid;voteBySid.set(sg.sid,sg);}continue;}if(!sg.from)continue;const a=posOf.get(sg.from),b=posOf.get(sg.to);if(a==null||b==null)continue;sg._a=a;sg._b=b;sg._mid=mid;segByFrom.set(sg.from,sg);for(let k=a;k<=b;k++)if(!isChairRole(index[k].role))index[k]._seg=sg;}$("#fSceneWrap").hidden=false;}
+// 読み込み済みの発言に場面を対応付ける（未対応の場面だけ処理。発言索引を後から追加したときにも呼ぶ）
+function mapSegments(){if(!proceedings)return;for(const mid in proceedings)for(const sg of proceedings[mid].segments){if(sg._a!=null)continue;if(sg.kind==="vote"){const k=posOf.get(sg.sid);if(k!=null){sg._a=sg._b=k;sg._mid=mid;voteBySid.set(sg.sid,sg);}continue;}if(!sg.from)continue;const a=posOf.get(sg.from),b=posOf.get(sg.to);if(a==null||b==null)continue;sg._a=a;sg._b=b;sg._mid=mid;segByFrom.set(sg.from,sg);for(let k=a;k<=b;k++)if(!isChairRole(index[k].role))index[k]._seg=sg;}}
+mapSegments();if(proceedings)$("#fSceneWrap").hidden=false;
 const sceneOf=e=>e._seg?e._seg.kind:"other";
 const sceneLabel=sg=>sg.kind==="debate"&&sg.stance?sg.stance+"討論":sg.kind==="report"&&sg.committee?"委員長報告（"+sg.committee.replace(/委員会$/,"")+"）":SCENE[sg.kind];
 // 場面内の各発言のラベル（質問／再質問／再々質問／答弁）
@@ -223,7 +226,8 @@ function turnLabels(sg){const m=new Map();if(!sg.turns)return m;const pre=sg.fro
 // 会議セレクト（索引済み）
 for(const t of toc.filter(x=>x.indexed)){const o=document.createElement("option");o.value=t.id;o.textContent=t.name;$("#fMeeting").appendChild(o);}
 // 発言者候補
-(function(){const mem=new Map(),off=new Map();for(const e of index){const nm=e.name||"";if(!nm||nm[0]==="（")continue;if(/^[0-9０-９]+番$/.test(e.role||"")){if(!mem.has(nm))mem.set(nm,e.role);}else if(e.role){if(!off.has(e.role))off.set(e.role,nm);}}const num=s=>parseInt(String(s).replace(/[０-９]/g,d=>"０１２３４５６７８９".indexOf(d)),10)||999;const list=[...[...mem].map(([v,h])=>["議員",v,h]).sort((a,b)=>num(a[2])-num(b[2])),...[...off].map(([v,h])=>[roleCat({role:v})==="議長"?"議長":"当局",v,h])];$("#spkList").innerHTML=list.map(x=>'<option value="'+esc(x[1])+'">'+x[0]+'・'+esc(x[2])+'</option>').join("");})();
+function refreshSpeakers(){const mem=new Map(),off=new Map();for(const e of index){const nm=e.name||"";if(!nm||nm[0]==="（")continue;if(/^[0-9０-９]+番$/.test(e.role||"")){if(!mem.has(nm))mem.set(nm,e.role);}else if(e.role){if(!off.has(e.role))off.set(e.role,nm);}}const num=s=>parseInt(String(s).replace(/[０-９]/g,d=>"０１２３４５６７８９".indexOf(d)),10)||999;const list=[...[...mem].map(([v,h])=>["議員",v,h]).sort((a,b)=>num(a[2])-num(b[2])),...[...off].map(([v,h])=>[roleCat({role:v})==="議長"?"議長":"当局",v,h])];$("#spkList").innerHTML=list.map(x=>'<option value="'+esc(x[1])+'">'+x[0]+'・'+esc(x[2])+'</option>').join("");}
+refreshSpeakers();
 // 頻出語
 // 注目テーマ（highlights.json）。無ければ従来の頻出語にフォールバック。
 const FREQ=["補正予算","一般質問","入札","介護","子育て","給食","道路","通年議会"];
@@ -397,7 +401,8 @@ function applyHash(){const p=new URLSearchParams(location.hash.slice(1));if(!p.h
     if(tab==="list"){crossView=p.get("view")||"petition";crossYear=p.get("year")||"";crossQ=p.get("cq")||"";}
     showTab(tab);if(tab==="search")render();
     const bill=p.get("bill");if(bill){if(tab!=="gian"&&tab!=="list")showTab("gian");const b=[...document.querySelectorAll("[data-bill]")].find(x=>x.dataset.bill===bill&&x.offsetParent);if(b){b.click();b.scrollIntoView({block:"center"});}}
-    const th=p.get("thread");if(th){const sg=th.startsWith("v:")?voteBySid.get(th.slice(2)):segByFrom.get(th);if(sg)openThread(sg,p.get("focus")||null);}
+    const th=p.get("thread");if(th){const sg=th.startsWith("v:")?voteBySid.get(th.slice(2)):segByFrom.get(th);if(sg)openThread(sg,p.get("focus")||null);
+      else if(DATA.loading&&!DATA.loading.done){threadKey=th;threadFocus=p.get("focus")||null;}}   // まだ読み込んでいない年：読み込み後に開く
   }finally{applying=false;}
   syncHash();return true;}
 window.addEventListener("hashchange",()=>{applyHash();});
@@ -406,7 +411,19 @@ function showTab(t){curTab=t;if(t!=="gian"&&t!=="list")openBill=null;for(const k
 for(const k in TABS)$(TABS[k][0]).onclick=()=>{openBill=null;showTab(k);};
 if(proceedings)$("#tabList").hidden=false;
 const toTop=$("#toTop");window.addEventListener("scroll",()=>{toTop.style.display=window.scrollY>400?"block":"none";});toTop.onclick=()=>window.scrollTo({top:0,behavior:"smooth"});
+// オンライン版は直近の年から先に読み込み、残りの年は後から addIndex で追加する（並びは分割前と同じになる）
+const loading=DATA.loading;
+function showLoading(){const el=$("#loadnote");if(!loading||loading.done){el.hidden=true;return;}el.hidden=false;el.textContent="直近の会議録（"+loading.from+"年〜）から検索できます。それより前の会議録を読み込み中です…（"+loading.loaded+"/"+loading.total+"年分）";}
+showLoading();
 if(!applyHash())render();
+function addIndex(entries,info){
+  const base=index.length;for(const e of entries)index.push(e);for(let k=base;k<index.length;k++)posOf.set(index[k].sid,k);
+  mapSegments();refreshSpeakers();if(loading)Object.assign(loading,info||{});showLoading();
+  const dlg=$("#thread");
+  if(curTab==="search")render();else if(curTab==="gian")renderGian();else if(curTab==="list")renderCross();
+  if(!dlg.open&&threadKey){const sg=threadKey.startsWith("v:")?voteBySid.get(threadKey.slice(2)):segByFrom.get(threadKey);if(sg)openThread(sg,threadFocus);else if(loading&&loading.done){threadKey=threadFocus=null;syncHash();}}   // 古い年のやりとりへの共有リンク
+}
+return {addIndex};
 }
 /*__BOOT__*/
 </script>
