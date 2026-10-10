@@ -56,7 +56,7 @@ const CACHE_DIR =
   process.env.HINO_MCP_CACHE || path.join(os.homedir(), ".cache", "hino-council-mcp");
 const MAX_AGE_MS = Number(process.env.HINO_MCP_MAX_AGE_HOURS || 24) * 3600 * 1000;
 
-const SERVER_INFO = { name: "hino-council-mcp", version: "0.4.0" };
+const SERVER_INFO = { name: "hino-council-mcp", version: "0.4.1" };
 
 // クライアント（Claude）への利用方針。冒頭のデータ自己申告は起動時に実データから生成する
 // （council-dashboard はフォークで他自治体運用があるため、「日野町」をハードコードしない）。
@@ -318,7 +318,22 @@ function turnKinds(sg) {
   if (!sg.turns || !sg.from) return m;
   const pre = sg.from.slice(0, -4), f0 = parseInt(sg.from.slice(-4), 10);
   const label = { q: "質問", rq: "再質問", a: "答弁", s: "発言" };
-  for (const [off, t, n] of sg.turns) m.set(pre + String(f0 + off).padStart(4, "0"), { turn: label[t] || t, ...(n ? { question_no: n } : {}) });
+  const sid = (off) => pre + String(f0 + off).padStart(4, "0");
+  // 議会だよりの全質問の位置（qalign）が分かっていれば、その番号で質問／再質問を付け直す（会議録だけの判定より正確）
+  const nb = (sg.topics || []).filter((t) => t.src === "bulletin").length;
+  if (sg.qalign && nb && sg.qalign.length === nb) {
+    const at = new Map();
+    for (const [n, off] of sg.qalign) (at.get(off) || at.set(off, []).get(off)).push(n);
+    let cur = null;
+    for (const [off, t] of sg.turns) {
+      if (t === "a") { m.set(sid(off), { turn: "答弁", ...(cur ? { bulletin_question: cur } : {}) }); continue; }
+      if (t !== "q" && t !== "rq") continue;
+      if (at.has(off)) { cur = at.get(off); m.set(sid(off), { turn: "質問", bulletin_question: cur }); }
+      else m.set(sid(off), { turn: "再質問", ...(cur ? { bulletin_question: cur } : {}) });
+    }
+    return m;
+  }
+  for (const [off, t, n] of sg.turns) m.set(sid(off), { turn: label[t] || t, ...(n ? { question_no: n } : {}) });
   return m;
 }
 function memberBlocks(meetingId, nMember) {
