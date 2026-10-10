@@ -1,5 +1,72 @@
 [
   {
+    "id": "0000008943",
+    "name": "令和8年5月臨時会議",
+    "year": 2026,
+    "era": "令和8年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008943.html",
+    "indexed": true,
+    "pdfs": [
+      {
+        "label": "目次(PDFサイズ：60.12KB)",
+        "date": null,
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8943/8.5rmokuji.pdf"
+      },
+      {
+        "label": "本文(PDFサイズ：299.57KB)",
+        "date": "2026-05-15",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8943/20260515kaigiroku.pdf"
+      }
+    ]
+  },
+  {
+    "id": "0000008942",
+    "name": "令和8年3月定例会議",
+    "year": 2026,
+    "era": "令和8年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000008942.html",
+    "indexed": true,
+    "pdfs": [
+      {
+        "label": "目次(PDFサイズ：183.46KB)",
+        "date": null,
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8942/8.3tmokuji.pdf"
+      },
+      {
+        "label": "第1日(3月2日)(PDFサイズ：494.08KB)",
+        "date": "2026-03-02",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8942/20260302kaigiroku.pdf"
+      },
+      {
+        "label": "第2日(3月5日)(PDFサイズ：1.55MB)",
+        "date": "2026-03-05",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8942/20260305kaigiroku.pdf"
+      },
+      {
+        "label": "第3日(3月6日)(PDFサイズ：1.05MB)",
+        "date": "2026-03-06",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8942/20260306kaigiroku.pdf"
+      },
+      {
+        "label": "第4日(3月9日)(PDFサイズ：927.45KB)",
+        "date": "2026-03-09",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8942/20260309kaigiroku.pdf"
+      },
+      {
+        "label": "第5日(3月10日)(PDFサイズ：1004.26KB)",
+        "date": "2026-03-10",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8942/20260310kaigiroku.pdf"
+      },
+      {
+        "label": "第6日(3月23日)(PDFサイズ：639.38KB)",
+        "date": "2026-03-23",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8942/20260323kaigiroku.pdf"
+      }
+    ]
+  },
+  {
     "id": "0000008692",
     "name": "令和8年1月臨時会議",
     "year": 2026,
