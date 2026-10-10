@@ -72,6 +72,7 @@ const toHalf = (s) =>
 // 区分推定（並び順＝優先順位）。「予算決算特別委員会の設置」を決算と誤判定しないよう
 // 委員会・選挙・規則を予算/決算より前に判定する。
 const KIND = [
+  ["請願", /^(請願|陳情)第/],
   ["契約", /工事請負|請負契約|契約の締結|契約について/],
   ["指定管理", /指定管理者の指定/],
   ["意見書", /意見書|決議について|要望書?決議/],
@@ -99,7 +100,7 @@ export function extractGianFromToc(tocRaw) {
   const items = tocRaw.split(/(?=１．)/);
   for (let seg of items) {
     seg = seg.replace(/[\r\n]+/g, "");
-    const m = seg.match(/^１．\s*(議第|報第|議案第|選第|諮第|発議第|決議案第)\s*([0-9０-９]+)\s*号\s*(.+)/);
+    const m = seg.match(/^１．\s*(議第|報第|議案第|選第|諮第|発議第|決議案第|請願第|陳情第)\s*([0-9０-９]+)\s*号\s*(.+)/);
     if (!m) continue;
     const no = `${m[1]}${toHalf(m[2])}号`;
     let title = m[3]
@@ -107,6 +108,7 @@ export function extractGianFromToc(tocRaw) {
       .replace(/[0-9０-９]+[－-][0-9０-９]+.*$/, "")
       .replace(/〔.*$/, "")
       .replace(/[\s　]/g, "").trim();
+    title = title.replace(/^[（(](.+)[）)]について$/, "$1"); // 継続審査後の再上程「（〇〇を求める請願）について」
     if (/^から/.test(title) || title.length < 3) continue; // 範囲見出し・短すぎは除外
     if (!(no in map)) map[no] = title; // 最初の出現＝上程時の正式件名
   }
@@ -135,7 +137,7 @@ export function extractGian(raw) {
   const head = flat.split(/会議の概要/)[0] || flat.slice(0, 8000);
   const items = new Map();
   // 番号＋件名（次の 〃 / 日程第 / 別の議案番号 / 会議の概要 まで）
-  const re = /(議第|報第|議案第|選第|諮第|発議第)\s*([0-9０-９]+)\s*号[\s　]*([^〃]*?)(?=〃|日程第|会議の概要|議第|報第|議案第|選第|諮第|発議第|$)/g;
+  const re = /(議第|報第|議案第|選第|諮第|発議第|請願第|陳情第)\s*([0-9０-９]+)\s*号[\s　]*([^〃]*?)(?=〃|日程第|会議の概要|議第|報第|議案第|選第|諮第|発議第|請願第|陳情第|$)/g;
   let m;
   while ((m = re.exec(head))) {
     const no = `${m[1]}${toHalf(m[2])}号`;
@@ -149,7 +151,7 @@ export function extractGian(raw) {
     if (!items.has(no)) items.set(no, { no, kind: guessKind(no + title), title });
   }
   // 件名が取れなかった番号も最低限拾う
-  const re2 = /(議第|報第|議案第|選第|諮第|発議第)\s*([0-9０-９]+)\s*号/g;
+  const re2 = /(議第|報第|議案第|選第|諮第|発議第|請願第|陳情第)\s*([0-9０-９]+)\s*号/g;
   while ((m = re2.exec(head))) {
     const no = `${m[1]}${toHalf(m[2])}号`;
     if (!items.has(no)) items.set(no, { no, kind: "その他", title: no });

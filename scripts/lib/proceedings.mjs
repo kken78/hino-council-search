@@ -65,7 +65,8 @@ function votesIn(text, ctxBills, agenda = []) {
   const t = squash(text);
   // 2つ目の選択肢は選挙（「よって、議長に14番、X君が当選されました」）。番号を言わないので日程の選第を使う。
   // 「ご異議なしと認め、名簿表のとおり選任することに決しました」のように「よって」が無い言い方もある
-  const re = /(?:よって|と認め(?:ます)?)[、。]?(?:(?:(.{1,600}?)(?:については|につきましては|について、|は)、?)?(.{1,60}?)(?:と|に)?(?:決しました|決定(?:いたし|し)ました)|(.{1,120}?)当選されました)/g;
+  // 「よって」を省き議案番号から始まる文（「請願第4号、…は、委員長報告のとおり採択と決しました」）もある
+  const re = /(?:よって|と認め(?:ます)?|。(?=(?:請願|陳情|決議案|議|報|選)第))[、。]?(?:(?:(.{1,600}?)(?:については|につきましては|について、|は)、?)?(.{1,60}?)(?:と|に)?(?:決しました|決定(?:いたし|し)ました)|(.{1,120}?)当選されました)/g;
   let m, last = 0;
   while ((m = re.exec(t))) {
     const elect = m[3] != null;
@@ -263,7 +264,7 @@ export function parseDay(speeches, { date = null, pdf = null, agenda = [] } = {}
       const own = head.match(/(賛成|反対)(?:の立場|する立場|の討論|討論)(?:で|から|として|を(?:行|いた|させ|申し))/);
       const loose = head.match(/(賛成|反対)(?:の立場|する立場|討論|します|いたします)(?!が)/);
       s.stance = (own || loose || [])[1] || null;
-      s.bills = [...new Set([...expandBills(ownText), ...billsByTitle(ownText, agenda)])];
+      s.bills = [...new Set([...expandBills(ownText), ...billsByTitle(ownText, agenda, Infinity)])]; // 討論者は反対・賛成する議案を件名で列挙することが多い（全文で照合）
     }
     if (s.kind === "proposal") s.bills = s.ctx && s.ctx.length ? s.ctx : expandBills(ownText.slice(0, 400));
     delete s._texts; delete s.fromI; delete s.ctx;
