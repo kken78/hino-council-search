@@ -6,7 +6,7 @@
 <title>日野町議会 会議録 横断検索（プレビュー）</title>
 <style>
 :root{--ink:#1b2a41;--paper:#f5f3ee;--card:#fffefb;--hinona:#8e2a4d;--hinona-soft:#f4dde4;--slate:#52606d;--line:#ddd7ca;--line-strong:#c8c0ae;--hit:#fff2a8}
-*{box-sizing:border-box}html,body{margin:0;padding:0}
+*{box-sizing:border-box}html,body{margin:0;padding:0}[hidden]{display:none!important}
 body{background:var(--paper);color:var(--ink);line-height:1.7;font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Noto Sans JP","Meiryo",sans-serif}
 .mincho{font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif}
 a{color:var(--hinona)}.wrap{max-width:1040px;margin:0 auto;padding:0 16px 60px}
@@ -58,6 +58,33 @@ table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{border-bottom:1
 .toc h3{border-bottom:2px solid var(--line);padding-bottom:5px;margin:18px 0 6px;font-size:16px}
 .mrow{padding:8px 0;border-bottom:1px solid #eee7d8;font-size:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.mname{font-weight:600}.small{font-size:12px;color:var(--slate)}.daylink{font-size:12px}
 .srch{font:inherit;font-size:12px;cursor:pointer;color:#fff;background:var(--hinona);border:0;border-radius:999px;padding:3px 12px}
+/* 審議構造：場面バッジ・一般質問カード・やりとり表示 */
+.scene{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;white-space:nowrap;background:#eef3ec;color:#3d5c37;border:1px solid #cfdccb}
+.scene.s-ippan{background:#eaf0f5;color:#2b4663;border-color:#c9d6e2}.scene.s-shitsugi{background:#f6efe1;color:#6b5a36;border-color:#e3d6bb}
+.scene.s-report{background:#efeaf5;color:#4d3d6b;border-color:#d8cde6}.scene.s-debate{background:var(--hinona-soft);color:var(--hinona);border-color:#e3b9c6}.scene.s-proposal{background:#eef3ec;color:#3d5c37}
+.ipgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:6px}
+.ipcard{background:#fbfaf6;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;display:flex;flex-direction:column;gap:6px}
+.ipcard .iphead{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline}.ipcard .ipname{font-weight:700;font-size:14.5px}
+.stylebadge{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--line-strong);color:var(--slate);background:#fff}
+.iptopics{margin:0;padding-left:1.3em}.iptopics li{margin:1px 0}.srcnote{font-size:11px;color:var(--slate)}
+.ttag{font-size:10.5px;background:#eafaf0;color:#2e6b46;border-radius:4px;padding:0 6px;margin-left:4px;white-space:nowrap}
+.ipacts{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.linkbtn{font:inherit;font-size:12px;border:1.3px solid var(--line-strong);background:#fff;color:var(--ink);border-radius:999px;padding:3px 11px;cursor:pointer}.linkbtn:hover{border-color:var(--hinona);color:var(--hinona)}
+.linkbtn.primary{background:var(--ink);border-color:var(--ink);color:#fff}.linkbtn.primary:hover{background:var(--hinona);border-color:var(--hinona);color:#fff}
+dialog.thread{width:min(860px,96vw);max-height:92vh;border:0;border-radius:12px;padding:0;background:var(--paper);color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.35)}
+dialog.thread::backdrop{background:rgba(20,28,40,.55)}
+.thead{position:sticky;top:0;background:var(--ink);color:#f5f3ee;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;justify-content:space-between;z-index:2}
+.thead h2{font-size:17px;margin:0;font-weight:600}.thead .small{color:#b9c4d4}.thead button{background:none;border:1px solid #8796ab;color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font:inherit;font-size:13px;white-space:nowrap}
+.tbody{padding:12px 16px 20px}.ttools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--slate);margin-bottom:10px}
+.turn{background:var(--card);border:1px solid var(--line);border-left:4px solid #2b4663;border-radius:9px;padding:9px 12px;margin:0 0 9px}
+.turn.t-a{margin-left:28px;border-left-color:#6b5a36}.turn.t-chair{background:transparent;border:0;border-left:3px solid var(--line);border-radius:0;padding:2px 10px;margin:0 0 6px 14px;font-size:12.5px;color:var(--slate)}
+.turn.focus{box-shadow:0 0 0 3px var(--hinona-soft);border-color:var(--hinona)}
+.turn .tlabel{font-size:11.5px;font-weight:700;color:#2b4663;margin-right:6px}.turn.t-a .tlabel{color:#6b5a36}
+.turn .tbody-text{font-size:14px;white-space:pre-wrap;margin-top:4px;color:#26303f}
+.turn .tfoot{margin-top:5px;font-size:12px}
+.thread.hide-chair .t-chair{display:none}
+.turn .tfull{display:none}.turn.open .tfull,.thread.show-full .tfull{display:inline}.turn.open .tshort,.thread.show-full .tshort{display:none}.thread.show-full .tmore{display:none}.tmore{font-size:12px;margin-top:3px}
+@media(max-width:560px){dialog.thread{width:100vw;max-width:100vw;max-height:100vh;height:100vh;border-radius:0}.turn.t-a{margin-left:12px}}
 footer{margin:34px 0 16px;font-size:11.5px;color:var(--slate);border-top:1px solid var(--line);padding-top:12px}
 #toTop{position:fixed;right:20px;bottom:20px;width:46px;height:46px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:50;display:none}
 @media(max-width:640px){.mast-title{font-size:19px}.filters select,.filters input{min-width:0;flex:1}.filters .fcol{flex:1 1 46%}}
@@ -110,6 +137,7 @@ footer{margin:34px 0 16px;font-size:11.5px;color:var(--slate);border-top:1px sol
       <label class="fcol">会議<select id="fMeeting"><option value="">すべての会議</option></select></label>
       <label class="fcol">発言者<input id="fSpeaker" type="text" list="spkList" placeholder="氏名・役職"><datalist id="spkList"></datalist></label>
       <label class="fcol">区分<select id="fRole"><option value="">議員・当局すべて</option><option value="議員">議員</option><option value="当局">当局（執行部）</option><option value="議長">議長</option></select></label>
+      <label class="fcol" id="fSceneWrap" hidden>場面<select id="fScene"><option value="">すべての場面</option><option value="ippan">一般質問</option><option value="shitsugi">議案質疑</option><option value="report">委員長報告</option><option value="debate">討論</option><option value="proposal">提案説明</option><option value="other">その他（議事進行など）</option></select></label>
       <label class="fcol">種別<select id="fType"><option value="">すべて</option><option>定例会</option><option>臨時会</option></select></label>
       <label class="fcol">並び<select id="fSort"><option value="date">新しい会議順</option><option value="relevance">関連度</option></select></label>
     </div>
@@ -123,11 +151,12 @@ footer{margin:34px 0 16px;font-size:11.5px;color:var(--slate);border-top:1px sol
 </main>
 <footer>本システムの検索結果は機械処理によるもので、原本と差異が生じ得ます。正確な内容は各PDF（原本）でご確認ください。議事録検索は単体で動作します（議会だよりダッシュボードとは疎結合で連携可）。出典：日野町ホームページ「会議録」。  <a href="https://kken78.github.io/council-dashboard/" target="_blank" rel="noreferrer" style="margin-left:8px">議会だよりダッシュボードを開く ↗</a></footer>
 </div>
+<dialog id="thread" class="thread" aria-labelledby="threadTitle"><div class="thead"><div><h2 id="threadTitle"></h2><div class="small" id="threadSub"></div></div><button type="button" id="threadClose">閉じる ✕</button></div><div class="tbody" id="threadBody"></div></dialog>
 <button id="toTop" type="button" aria-label="ページ先頭へ戻る" title="先頭へ戻る">↑</button>
 
 <script>
 function start(DATA){
-const {meetings, index, gian, dict, toc, topics, highlights, pages, local} = DATA;
+const {meetings, index, gian, dict, toc, topics, highlights, pages, local, proceedings} = DATA;
 const {variants, synonyms, yomi} = dict;
 const PAGE=20; let page=0, curResults=[], curPosAlts=[];
 const SKIP=/[\s　、，,・･\-－―ー~〜]/;
@@ -154,13 +183,23 @@ function matchGroup(ns,g){let hits=0;for(const t of g){const f=incAny(ns,t.alts)
 // ハイライトは表示中の20件だけ。ここでのみ map 付きの buildNorm を都度計算する（軽い）。
 function hitRanges(e,posAlts){const{norm,map}=buildNorm(e.text||"");const rs=[];for(const a of posAlts){if(!a)continue;let idx=norm.indexOf(a);while(idx!==-1){rs.push([map[idx],map[idx+a.length-1]+1]);idx=norm.indexOf(a,idx+a.length);}}rs.sort((x,y)=>x[0]-y[0]);const m=[];for(const r of rs){const l=m[m.length-1];if(l&&r[0]<=l[1])l[1]=Math.max(l[1],r[1]);else m.push([...r]);}return m;}
 function roleCat(e){const r=e.role||"";if(/議長/.test(r))return"議長";if(/^[0-9０-９]+番$/.test(r))return"議員";if(r)return"当局";return"";}
-function search(idx,query,f){const groups=query.trim()?parseQuery(query):[];const posAlts=[...new Set(groups.flat().filter(t=>!t.neg).flatMap(t=>t.alts))];const out=[];const ms=new Set();let total=0;for(const e of idx){if(f.meeting&&e.meetingId!==f.meeting)continue;if(f.role&&roleCat(e)!==f.role)continue;if(f.type&&e.type!==f.type)continue;if(f.speaker&&!((e.name||"").includes(f.speaker)||(e.role||"").includes(f.speaker)))continue;let score=0;if(groups.length){const ns=matchNorm(e);let mt=false;for(const g of groups){const h=matchGroup(ns,g);if(h!==null){mt=true;score=Math.max(score,h);}}if(!mt)continue;}out.push({e,score});ms.add(e.meetingId);total+=score;}return{out,meetingCount:ms.size,hitCount:total,posAlts};}
+function search(idx,query,f){const groups=query.trim()?parseQuery(query):[];const posAlts=[...new Set(groups.flat().filter(t=>!t.neg).flatMap(t=>t.alts))];const out=[];const ms=new Set();let total=0;for(const e of idx){if(f.meeting&&e.meetingId!==f.meeting)continue;if(f.role&&roleCat(e)!==f.role)continue;if(f.type&&e.type!==f.type)continue;if(f.scene&&sceneOf(e)!==f.scene)continue;if(f.speaker&&!((e.name||"").includes(f.speaker)||(e.role||"").includes(f.speaker)))continue;let score=0;if(groups.length){const ns=matchNorm(e);let mt=false;for(const g of groups){const h=matchGroup(ns,g);if(h!==null){mt=true;score=Math.max(score,h);}}if(!mt)continue;}out.push({e,score});ms.add(e.meetingId);total+=score;}return{out,meetingCount:ms.size,hitCount:total,posAlts};}
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
 function snippet(text,r){if(!r.length)return esc(text.slice(0,200))+(text.length>200?"…":"");const a=Math.max(0,r[0][0]-60),b=Math.min(text.length,r[r.length-1][1]+170);let o=a>0?"…":"",cur=a;for(const[s,e]of r){if(e<=a||s>=b)continue;if(s>cur)o+=esc(text.slice(cur,s));o+="<mark>"+esc(text.slice(Math.max(s,a),Math.min(e,b)))+"</mark>";cur=e;}if(cur<b)o+=esc(text.slice(cur,b));if(b<text.length)o+="…";return o;}
 function fullHL(text,r){if(!r.length)return esc(text);let o="",cur=0;for(const[s,e]of r){if(s>cur)o+=esc(text.slice(cur,s));o+="<mark>"+esc(text.slice(s,e))+"</mark>";cur=e;}o+=esc(text.slice(cur));return o;}
 
+// 審議構造（proceedings.json・任意）：議長以外の発言に場面を付ける（e._seg）。無ければ従来表示。
+const SCENE={ippan:"一般質問",shitsugi:"議案質疑",report:"委員長報告",debate:"討論",proposal:"提案説明"};
+const posOf=new Map();index.forEach((e,k)=>posOf.set(e.sid,k));
+const segByFrom=new Map();
+const isChairRole=r=>/議長$/.test(r||"");
+if(proceedings){for(const mid in proceedings)for(const sg of proceedings[mid].segments){if(!sg.from)continue;const a=posOf.get(sg.from),b=posOf.get(sg.to);if(a==null||b==null)continue;sg._a=a;sg._b=b;sg._mid=mid;segByFrom.set(sg.from,sg);for(let k=a;k<=b;k++)if(!isChairRole(index[k].role))index[k]._seg=sg;}$("#fSceneWrap").hidden=false;}
+const sceneOf=e=>e._seg?e._seg.kind:"other";
+const sceneLabel=sg=>sg.kind==="debate"&&sg.stance?sg.stance+"討論":sg.kind==="report"&&sg.committee?"委員長報告（"+sg.committee.replace(/委員会$/,"")+"）":SCENE[sg.kind];
+// 場面内の各発言のラベル（質問／再質問／再々質問／答弁）
+function turnLabels(sg){const m=new Map();if(!sg.turns)return m;const pre=sg.from.slice(0,-4),f0=parseInt(sg.from.slice(-4),10);const multi=sg.turns.some(x=>x[1]==="q"&&x[2]>1);const rq={};for(const [off,t,n] of sg.turns){const sid=pre+String(f0+off).padStart(4,"0");let label="";if(t==="q")label=multi?"質問（第"+n+"問）":"質問";else if(t==="rq"){rq[n]=(rq[n]||0)+1;const k=rq[n];label=(k===1?"再質問":k===2?"再々質問":"再質問（"+k+"回目）")+(multi?"・第"+n+"問":"");}else if(t==="a")label="答弁";m.set(sid,{t,label});}return m;}
 {const _a=$("#tocN"),_b=$("#ixN");if(_a)_a.textContent=toc.length;if(_b)_b.textContent=toc.filter(t=>t.indexed).length;}
 // 会議セレクト（索引済み）
 for(const t of toc.filter(x=>x.indexed)){const o=document.createElement("option");o.value=t.id;o.textContent=t.name;$("#fMeeting").appendChild(o);}
@@ -182,11 +221,11 @@ const _chip=(label,q,reason)=>'<button type="button" class="freqchip" data-q="'+
 })();
 
 const RB={議員:["rb-giin","r-giin"],当局:["rb-tou","r-tou"],議長:["rb-gicho","r-gicho"]};
-function readFilters(){return{meeting:$("#fMeeting").value,speaker:$("#fSpeaker").value.trim(),role:$("#fRole").value,type:$("#fType").value};}
+function readFilters(){return{meeting:$("#fMeeting").value,speaker:$("#fSpeaker").value.trim(),role:$("#fRole").value,type:$("#fType").value,scene:$("#fScene").value};}
 function banner(f){const el=$("#mbanner");if(!f.meeting){el.innerHTML="";el.className="";return;}const m=toc.find(t=>t.id===f.meeting)||{name:f.meeting};el.className="mbanner";el.innerHTML='この会議録のみ：<b>'+esc(m.name)+'</b> <button type="button" class="chip" id="mclear">×全会議に戻す</button>';$("#mclear").onclick=()=>{$("#fMeeting").value="";render();};}
 function render(){
   const q=$("#q").value,f=readFilters();banner(f);
-  const active=q.trim()||f.meeting||f.speaker||f.role||f.type;
+  const active=q.trim()||f.meeting||f.speaker||f.role||f.type||f.scene;
   if(!active){$("#meta").innerHTML="";$("#results").innerHTML='<div class="empty-guide"><b>キーワードを入力</b>するか、上の「よく検索される語」・絞り込みで探せます。<br>収録：全文検索 '+index.length+' 発言／'+toc.filter(t=>t.indexed).length+' 会議　｜　目次カタログ '+toc.length+' 会議</div>';return;}
   const r=search(index,q,f);const sort=$("#fSort").value;
   r.out.sort((a,b)=>sort==="relevance"?b.score-a.score||(b.e.date||"").localeCompare(a.e.date||""):(b.e.date||"").localeCompare(a.e.date||"")||b.score-a.score);
@@ -200,27 +239,57 @@ function renderList(){
   if(!curResults.length){$("#results").innerHTML='<div class="empty">該当する発言がありません。条件を変えてお試しください。</div>';return;}
   const sl=curResults.slice(page*PAGE,(page+1)*PAGE);
   const html=sl.map(({e})=>{const r=q2?hitRanges(e,curPosAlts):[];const cat=roleCat(e);const cc=RB[cat]?RB[cat][1]:"";const bc=RB[cat]?RB[cat][0]:"";const sid=esc(e.sid);
-    return '<li class="card '+cc+'"><div class="card-top"><div><button type="button" class="who" data-spk="'+esc(e.name)+'">'+esc(e.name)+'</button>'+(cat?'<span class="rolebadge '+bc+'">'+cat+'</span>':'')+(e.role?'<span class="rolename">'+esc(e.role)+'</span>':'')+'</div>'+(e.agendaRef?'<span class="badge">'+e.agendaRef+'</span>':'')+'</div>'
+    return '<li class="card '+cc+'"><div class="card-top"><div><button type="button" class="who" data-spk="'+esc(e.name)+'">'+esc(e.name)+'</button>'+(cat?'<span class="rolebadge '+bc+'">'+cat+'</span>':'')+(e.role?'<span class="rolename">'+esc(e.role)+'</span>':'')+'</div><div>'+(e._seg?'<span class="scene s-'+e._seg.kind+'">'+esc(sceneLabel(e._seg))+'</span> ':'')+(e.agendaRef?'<span class="badge">'+e.agendaRef+'</span>':'')+'</div></div>'
      +'<p class="meta">'+esc(e.meeting)+'<span class="sep">|</span>'+(e.date||'')+'<span class="sep">|</span>'+e.type+'</p>'
      +'<div class="body snippet">'+snippet(e.text,r)+'</div><div class="body full" id="b-'+sid+'" style="display:none">'+fullHL(e.text,r)+'</div>'
-     +'<div class="card-actions"><button type="button" class="more" aria-expanded="false" aria-controls="b-'+sid+'">全文を表示</button>'+(e.pdf?'<a class="pdflink" href="'+e.pdf+'" target="_blank" rel="noreferrer">会議録PDFを開く</a>':'')+'</div></li>';
+     +'<div class="card-actions"><button type="button" class="more" aria-expanded="false" aria-controls="b-'+sid+'">全文を表示</button>'+(e._seg&&(e._seg.kind==="ippan"||e._seg.kind==="shitsugi")?'<button type="button" class="linkbtn" data-thread="'+sid+'">前後のやりとりを見る</button>':'')+(e.pdf?'<a class="pdflink" href="'+e.pdf+'" target="_blank" rel="noreferrer">会議録PDFを開く</a>':'')+'</div></li>';
   }).join("");
   $("#results").innerHTML='<ul class="resultlist">'+html+'</ul>'+pager();
   $("#results").querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{page=parseInt(b.dataset.pg,10);renderList();window.scrollTo({top:0,behavior:"smooth"});});
 }
-function resetAll(){$("#q").value="";$("#fMeeting").value="";$("#fSpeaker").value="";$("#fRole").value="";$("#fType").value="";render();}
+function resetAll(){$("#q").value="";$("#fMeeting").value="";$("#fSpeaker").value="";$("#fRole").value="";$("#fType").value="";$("#fScene").value="";render();}
 $("#results").addEventListener("click",ev=>{
   const spk=ev.target.closest("[data-spk]");if(spk){$("#fSpeaker").value=spk.dataset.spk;render();return;}
+  const thr=ev.target.closest("[data-thread]");if(thr){const e=index[posOf.get(thr.dataset.thread)];if(e&&e._seg)openThread(e._seg,e.sid);return;}
   if(ev.target.closest("a,[data-pg]"))return;
   const more=ev.target.closest(".more");if(more){const card=more.closest(".card");const full=card.querySelector(".full"),snip=card.querySelector(".snippet");const open=full.style.display==="none";full.style.display=open?"block":"none";snip.style.display=open?"none":"block";more.textContent=open?"閉じる":"全文を表示";more.setAttribute("aria-expanded",open);}
 });
 $("#freq").addEventListener("click",ev=>{const b=ev.target.closest("[data-q]");if(b){$("#q").value=b.dataset.q;render();}});
 $("#sform").addEventListener("submit",e=>{e.preventDefault();render();});
 let _qT;$("#q").addEventListener("input",()=>{clearTimeout(_qT);_qT=setTimeout(render,180);});
-["#fMeeting","#fSpeaker","#fRole","#fType","#fSort"].forEach(s=>$(s).addEventListener("input",render));
+["#fMeeting","#fSpeaker","#fRole","#fType","#fSort","#fScene"].forEach(s=>$(s).addEventListener("input",render));
 
-function renderGian(){const ms=meetings.filter(m=>gian[m.id]&&(gian[m.id].agenda.length||gian[m.id].ippan.length));$("#gianView").innerHTML=ms.map(m=>{const g=gian[m.id];let t='<section class="gcard"><h3 class="mincho">'+esc(m.name)+' <span class="tag">'+m.type+'</span> <span class="small">'+(m.era||m.year)+'</span></h3>';t+='<div class="gsec">議案（'+g.agenda.length+'件）</div>';if(g.agenda.length){t+='<div class="tablewrap"><table><thead><tr><th style="width:90px">議案番号</th><th style="width:70px">区分</th><th>件名</th></tr></thead><tbody>'+g.agenda.map(a=>'<tr><td data-label="議案番号">'+a.no+'</td><td data-label="区分"><span class="tag kindtag">'+a.kind+'</span></td><td data-label="件名">'+esc(a.title)+'</td></tr>').join("")+'</tbody></table></div>';}else t+='<div class="empty">議案の抽出はありません。</div>';if(g.ippan&&g.ippan.length){t+='<div class="gsec">一般質問（'+g.ippan.length+'名）</div><div class="ippanbox"><span class="small">質問者をクリックすると、その議員の発言を検索します</span><div style="margin-top:4px">'+g.ippan.map(ip=>'<button type="button" class="chip" data-spk2="'+esc(ip.member)+'">'+esc(ip.member)+'</button>').join("")+'</div></div>';}return t+'</section>';}).join("")||'<div class="empty">議案データがありません。</div>';
-$("#gianView").querySelectorAll("[data-spk2]").forEach(a=>a.onclick=ev=>{showTab("search");$("#fSpeaker").value=ev.target.dataset.spk2;$("#q").value="";render();});}
+// ── やりとり表示（一般質問・議案質疑の範囲を発言順に） ──
+// 長い発言は冒頭だけ表示し、流れ（質問→答弁→再質問）を追いやすくする。「全文で表示」か各発言の「続きを読む」で展開。
+const CUT=240;
+function turnText(t,open){if(t.length<=CUT+40||open)return '<div class="tbody-text">'+esc(t)+'</div>';return '<div class="tbody-text"><span class="tshort">'+esc(t.slice(0,CUT))+'…</span><span class="tfull">'+esc(t)+'</span></div><button type="button" class="more tmore" aria-expanded="false">続きを読む（全'+t.length+'字）</button>';}
+function openThread(sg,focusSid){
+  const dlg=$("#thread"),m=toc.find(t=>t.id===sg._mid)||{name:""};const labels=turnLabels(sg);
+  $("#threadTitle").textContent=sg.member+(sg.seat?"（"+sg.seat+"）":"")+" の"+SCENE[sg.kind];
+  $("#threadSub").textContent=[m.name,sg.date,sg.style?"質問方式："+sg.style:"",sg.bills&&sg.bills.length?"対象："+sg.bills.join("、"):""].filter(Boolean).join("　|　");
+  const tp=(sg.topics||[]).filter(x=>x.src==="bulletin"),tp2=(sg.topics||[]).filter(x=>x.src!=="bulletin");
+  const nq=[...labels.values()].filter(x=>x.t==="q"||x.t==="rq").length,na=[...labels.values()].filter(x=>x.t==="a").length;
+  let h='<div class="ttools"><span>質問 '+nq+' 回・答弁 '+na+' 回</span><label><input type="checkbox" id="showFull"> 全文で表示</label><label><input type="checkbox" id="showChair"> 議長の進行発言も表示</label></div>';
+  if(tp.length||tp2.length)h+='<div class="ippanbox" style="margin-bottom:10px"><b>質問項目</b>'+(tp.length?'<span class="srcnote">（議会だより 第'+tp[0].issue+'号）</span>':'<span class="srcnote">（会議録の答弁から推定）</span>')+'<ol class="iptopics">'+(tp.length?tp:tp2).map(x=>'<li>'+esc(x.title)+(x.theme?'<span class="ttag">'+esc(x.theme)+'</span>':'')+'</li>').join("")+'</ol></div>';
+  for(let k=sg._a;k<=sg._b;k++){const e=index[k];if(!e.text)continue;const chair=isChairRole(e.role),tl=labels.get(e.sid);const cls=chair?"t-chair":(tl&&tl.t==="a"?"t-a":"t-q");const cat=roleCat(e),bc=RB[cat]?RB[cat][0]:"";
+    if(chair){h+='<div class="turn t-chair" data-sid="'+esc(e.sid)+'">議長：'+esc(e.text)+'</div>';continue;}
+    h+='<div class="turn '+cls+(e.sid===focusSid?' focus':'')+'" data-sid="'+esc(e.sid)+'"><div>'+(tl&&tl.label?'<span class="tlabel">'+tl.label+'</span>':'')+'<b>'+esc(e.name)+'</b>'+(cat?'<span class="rolebadge '+bc+'">'+cat+'</span>':'')+(e.role?'<span class="rolename">'+esc(e.role)+'</span>':'')+'</div>'+turnText(e.text,e.sid===focusSid)+(e.pdf?'<div class="tfoot"><a class="pdflink" href="'+e.pdf+'" target="_blank" rel="noreferrer">会議録PDFを開く</a></div>':'')+'</div>';}
+  $("#threadBody").innerHTML=h;dlg.classList.add("hide-chair");dlg.classList.remove("show-full");
+  $("#showFull").onchange=ev=>dlg.classList.toggle("show-full",ev.target.checked);
+  $("#showChair").onchange=ev=>dlg.classList.toggle("hide-chair",!ev.target.checked);
+  if(dlg.showModal){if(!dlg.open)dlg.showModal();}else dlg.setAttribute("open","");
+  const f=focusSid&&$("#threadBody").querySelector('.turn[data-sid="'+focusSid+'"]');$("#threadBody").parentElement.scrollTop=0;if(f)f.scrollIntoView({block:"center"});
+}
+$("#threadClose").onclick=()=>{const d=$("#thread");d.close?d.close():d.removeAttribute("open");};
+$("#thread").addEventListener("click",ev=>{if(ev.target===$("#thread")){$("#threadClose").click();return;}const b=ev.target.closest(".tmore");if(b){const tu=b.closest(".turn");const o=tu.classList.toggle("open");b.setAttribute("aria-expanded",o);b.textContent=o?"閉じる":"続きを読む";}});
+// 一般質問の質問者カード（proceedings があるとき）
+function ipCard(sg){const bt=(sg.topics||[]).filter(x=>x.src==="bulletin"),mt=(sg.topics||[]).filter(x=>x.src!=="bulletin");const tp=bt.length?bt:mt;
+  return '<div class="ipcard"><div class="iphead">'+(sg.seat?'<span class="small">'+esc(sg.seat)+'</span>':'')+'<span class="ipname">'+esc(sg.member)+'</span>'+(sg.style?'<span class="stylebadge" title="議員が宣言した質問方式">'+esc(sg.style)+'</span>':'')+'<span class="small">'+esc(sg.date||"")+'</span></div>'
+   +(tp.length?'<ol class="iptopics">'+tp.map(x=>'<li>'+esc(x.title)+(x.theme?'<span class="ttag">'+esc(x.theme)+'</span>':'')+'</li>').join("")+'</ol><div class="srcnote">'+(bt.length?'質問項目：議会だより（第'+bt[0].issue+'号）':'質問項目：会議録の答弁から推定')+'</div>':'<div class="srcnote">質問項目は未抽出です（やりとりから確認できます）</div>')
+   +'<div class="ipacts"><button type="button" class="linkbtn primary" data-thr="'+esc(sg.from)+'">やりとりを見る</button><button type="button" class="linkbtn" data-spk2="'+esc(sg.member)+'">この議員の発言を検索</button></div></div>';}
+function renderGian(){const ms=meetings.filter(m=>gian[m.id]&&(gian[m.id].agenda.length||gian[m.id].ippan.length));$("#gianView").innerHTML=ms.map(m=>{const g=gian[m.id];let t='<section class="gcard"><h3 class="mincho">'+esc(m.name)+' <span class="tag">'+m.type+'</span> <span class="small">'+(m.era||m.year)+'</span></h3>';t+='<div class="gsec">議案（'+g.agenda.length+'件）</div>';if(g.agenda.length){t+='<div class="tablewrap"><table><thead><tr><th style="width:90px">議案番号</th><th style="width:70px">区分</th><th>件名</th></tr></thead><tbody>'+g.agenda.map(a=>'<tr><td data-label="議案番号">'+a.no+'</td><td data-label="区分"><span class="tag kindtag">'+a.kind+'</span></td><td data-label="件名">'+esc(a.title)+'</td></tr>').join("")+'</tbody></table></div>';}else t+='<div class="empty">議案の抽出はありません。</div>';const ipSegs=proceedings&&proceedings[m.id]?proceedings[m.id].segments.filter(x=>x.kind==="ippan"&&x._a!=null):[];if(ipSegs.length){t+='<div class="gsec">一般質問（'+ipSegs.length+'名）</div><div class="ipgrid">'+ipSegs.map(ipCard).join("")+'</div>';}else if(g.ippan&&g.ippan.length){t+='<div class="gsec">一般質問（'+g.ippan.length+'名）</div><div class="ippanbox"><span class="small">質問者をクリックすると、その議員の発言を検索します</span><div style="margin-top:4px">'+g.ippan.map(ip=>'<button type="button" class="chip" data-spk2="'+esc(ip.member)+'">'+esc(ip.member)+'</button>').join("")+'</div></div>';}return t+'</section>';}).join("")||'<div class="empty">議案データがありません。</div>';
+$("#gianView").querySelectorAll("[data-spk2]").forEach(a=>a.onclick=ev=>{showTab("search");$("#fSpeaker").value=ev.target.dataset.spk2;$("#q").value="";render();});
+$("#gianView").querySelectorAll("[data-thr]").forEach(a=>a.onclick=ev=>{const sg=segByFrom.get(ev.currentTarget.dataset.thr);if(sg)openThread(sg,null);});}
 function renderToc(){const by={};for(const t of toc)(by[t.year]||(by[t.year]=[])).push(t);const yrs=Object.keys(by).map(Number).sort((a,b)=>b-a);let h="";for(const y of yrs){const items=by[y].sort((a,b)=>b.id.localeCompare(a.id));h+='<h3 class="mincho">'+(y?y+'年（'+yearToEra(y)+'）':'年不明')+' <span class="small">'+items.length+'会議</span></h3>';for(const t of items){let days="";if(t.indexed&&t.pdfs&&t.pdfs.length)days=t.pdfs.filter(p=>p.date).map(p=>{var lb=(p.label||"").replace(/[（(]\s*(PDF)?サイズ[：:][^）)]*[）)]/g,"").replace(/\.pdf/i,"").trim();return '<a class="daychip" href="'+p.url+'" target="_blank" rel="noreferrer">'+esc(lb)+'</a>';}).join("");h+='<div class="mrow"><span class="mname">'+esc(t.name)+'</span><span class="tag">'+t.type+'</span>'+(t.indexed?'<button type="button" class="srch" data-mid="'+t.id+'">この会議録を検索</button>':'<span class="small">（本文未収録）</span>')+(local?'':' <a class="small" href="'+((pages&&pages[t.id])||t.url)+'" target="_blank" rel="noreferrer">会議ページ↗</a>')+(days?'<div class="small" style="flex-basis:100%">'+days+'</div>':'')+'</div>';}}$("#tocView").innerHTML=h;$("#tocView").querySelectorAll("[data-mid]").forEach(a=>a.onclick=ev=>{showTab("search");$("#fMeeting").value=ev.target.dataset.mid;$("#q").value="";$("#fSpeaker").value="";$("#fRole").value="";$("#fType").value="";render();});}
 function showTab(t){const v={search:"#searchView",gian:"#gianView",toc:"#tocView"};for(const k in v)$(v[k]).style.display=k===t?"":"none";$("#tabSearch").classList.toggle("on",t==="search");$("#tabGian").classList.toggle("on",t==="gian");$("#tabToc").classList.toggle("on",t==="toc");$("#tabSearch").setAttribute("aria-selected",t==="search");$("#tabGian").setAttribute("aria-selected",t==="gian");$("#tabToc").setAttribute("aria-selected",t==="toc");if(t==="gian")renderGian();if(t==="toc")renderToc();}
 $("#tabSearch").onclick=()=>showTab("search");$("#tabGian").onclick=()=>showTab("gian");$("#tabToc").onclick=()=>showTab("toc");
