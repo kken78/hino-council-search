@@ -115,6 +115,8 @@ function run() {
       const title = tocTitles[no];
       agendaMap.set(no, { no, kind: guessKind(no + title), title });
     }
+    // 継続審査後の再上程は件名が「（〇〇を求める請願）について」になるので、元の件名にそろえる（80字で切れている場合も）
+    for (const a of agendaMap.values()) if (/^[（(]/.test(a.title)) a.title = a.title.replace(/^[（(]/, "").replace(/[）)]について$/, "");
     // 決議の番号表記ゆれを統合：決議案第◯号があれば、同一件名の議第◯号/議案第◯号を除去
     const decTitles = new Set([...agendaMap.values()].filter(x=>/^決議案第/.test(x.no)).map(x=>x.title));
     for (const [no, x] of [...agendaMap]) {
