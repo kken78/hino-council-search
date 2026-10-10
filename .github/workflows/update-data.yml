@@ -1,5 +1,5 @@
 name: update-data
-# 週1回（月曜 6:00 JST）、日野町HPの会議録を巡回し、新しい会議・PDFがあれば取り込んで PR を作る。
+# 週1回（月曜 6:00 JST）、自治体サイトの会議録一覧（site.config.json）を巡回し、新しい会議・PDFがあれば取り込んで PR を作る。
 # 公開（build-deploy）とは別ジョブ：巡回に失敗しても公開中のサイトには影響しない。
 # PR は人が確認してからマージする（マージすると build-deploy が公開を更新する）。
 # 必要な設定：Settings → Actions → General → Workflow permissions の
@@ -72,7 +72,7 @@ jobs:
           git push --force origin "$BRANCH"
           {
             echo "## 自動取り込み（週1回）"
-            echo "日野町HPの会議録一覧を巡回し、次の会議を取り込みました。"
+            echo "自治体サイトの会議録一覧を巡回し、次の会議を取り込みました。"
             echo
             echo "$NEW"
             echo

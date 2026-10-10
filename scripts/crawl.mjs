@@ -6,10 +6,11 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { getPage, ROOT, sleep } from "./lib/fetchx.mjs";
 import { eraToYear, kanjiNum } from "./lib/eras.mjs";
+import { SITE } from "./lib/site.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dirname, "../public/data");
-const INDEX = `${ROOT}/category/32-3-6-0-0-0-0-0-0-0.html`;
+const INDEX = SITE.site.minutes_index; // 会議録の一覧ページ（site.config.json）
 
 function eraOf(name) {
   const m = name.match(/(令和|平成|昭和)\s*([0-9０-９一二三四五六七八九十元]+)\s*年/);
@@ -25,13 +26,14 @@ function guessDate(href, label, fallbackYear) {
   if (md && fallbackYear) return `${fallbackYear}-${String(md[1]).padStart(2,"0")}-${String(md[2]).padStart(2,"0")}`;
   return null;
 }
-const DENY_IDS = new Set(["0000006723", "0000003025"]); // 地図案内・多言語切替（全ページ共通リンク）
+const DENY_IDS = new Set(SITE.site.deny_page_ids || []); // 全ページ共通の案内リンク等（日野町：地図案内・多言語切替）
+const MEETING_RE = new RegExp(SITE.site.meeting_page_pattern), CAT_RE = new RegExp(SITE.site.minutes_category_pattern), PDF_RE = new RegExp(SITE.site.pdf_pattern, "i");
 const isMeetingHref = (h) => {
-  if (!/^https?:\/\/[^/]+\/0000\d{5,6}\.html$/.test(h)) return false; // ドメイン直下の数値ページのみ（site_policy等を除外）
+  if (!MEETING_RE.test(h)) return false; // 会議ページの形式（日野町：ドメイン直下の数値ページ。site_policy等を除外）
   const id = (h.match(/0000\d{5,6}/) || [""])[0];
   return !DENY_IDS.has(id);
 };
-const isCatHref = (h) => /category\/32-3-6-\d+/.test(h);
+const isCatHref = (h) => CAT_RE.test(h); // 年別カテゴリ
 const idOf = (url) => (url.match(/0000\d{5,6}/) || [null])[0] || (url.match(/(\d{4,6})\.html/)||[null,null])[1];
 
 async function run() {
@@ -79,7 +81,7 @@ async function run() {
       const pdfs = [];
       const seen = new Set();
       for (const { href, text } of m.links) {
-        if (!/\/cmsfiles\/.+\.pdf$/i.test(href)) continue;
+        if (!PDF_RE.test(href)) continue;
         if (seen.has(href)) continue;
         seen.add(href);
         const label = text || href.split("/").pop();

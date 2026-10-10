@@ -1,0 +1,32 @@
+{
+  "note": "自治体ごとの設定。他の自治体で使うときはこのファイルを書き換える（手順は FORK.md）。",
+  "council": {
+    "name": "日野町議会",
+    "full_name": "滋賀県日野町議会"
+  },
+  "site": {
+    "root": "https://www.town.shiga-hino.lg.jp",
+    "minutes_index": "https://www.town.shiga-hino.lg.jp/category/32-3-6-0-0-0-0-0-0-0.html",
+    "minutes_category_pattern": "category/32-3-6-\\d+",
+    "meeting_page_pattern": "^https?://[^/]+/0000\\d{5,6}\\.html$",
+    "deny_page_ids": ["0000006723", "0000003025"],
+    "pdf_pattern": "/cmsfiles/.+\\.pdf$",
+    "meeting_guide_index": "https://www.town.shiga-hino.lg.jp/category/32-3-5-0-0-0-0-0-0-0.html",
+    "source_label": "日野町ホームページ「会議録」"
+  },
+  "speech": {
+    "honorific": "君"
+  },
+  "ui": {
+    "title": "日野町議会 会議録 横断検索",
+    "eyebrow": "滋賀県日野町議会　会議録アーカイブ",
+    "offline_file": "日野町議会-会議録検索.html",
+    "footer_note": "議事録検索は単体で動作します（議会だよりダッシュボードとは疎結合で連携可）。",
+    "links": [
+      { "label": "議会だよりダッシュボードを開く ↗", "url": "https://kken78.github.io/council-dashboard/" }
+    ]
+  },
+  "bulletin": {
+    "questions_url": "https://raw.githubusercontent.com/kken78/council-dashboard/main/docs/data/questions.json"
+  }
+}

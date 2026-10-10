@@ -14,6 +14,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { buildNormStr, normTerm } from "./lib/normalize.mjs";
 import { readIndex } from "./lib/data.mjs";
+import { SITE } from "./lib/site.mjs";
+const COUNCIL = SITE.council.name;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -71,7 +73,7 @@ async function extractThemesAI() {
 
   const sys = "あなたは自治体議会の会議録を整理する編集者です。出力は指定のJSONのみ。前置き・説明・コードフェンスは一切禁止。";
   const user =
-`日野町議会の会議録から「注目テーマ」を2種類抽出してください。
+`${COUNCIL}の会議録から「注目テーマ」を2種類抽出してください。
 - raised: 複数の議員が一般質問で繰り返し取り上げているテーマ
 - official: 町（議案・当局の答弁）が重点として扱っているテーマ
 各テーマに、表示用の簡潔な label と、会議録本文を検索するための keywords（2〜5語・表記ゆれを含む日本語・固有名詞歓迎）を付けてください。
@@ -135,7 +137,7 @@ async function run() {
     const meetings = new Set(index.map((e) => e.meetingId)).size;
     const result = {
       generatedAt: new Date().toISOString().slice(0, 10), source: "curated(dict/highlight-themes.json)",
-      note: `日野町議会 会議録(${meetings}会議/${index.length.toLocaleString("en-US")}発言)を分析。政策体系順に配列。数値は議員発言の実データ集計。`,
+      note: `${COUNCIL} 会議録(${meetings}会議/${index.length.toLocaleString("en-US")}発言)を分析。政策体系順に配列。数値は議員発言の実データ集計。`,
       label: "議会で議論になっているテーマ", themes: list,
     };
     writeFileSync(join(root, "public/data/highlights.json"), JSON.stringify(result, null, 2));

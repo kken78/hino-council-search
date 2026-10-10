@@ -3,9 +3,10 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { SITE } from "./site.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-export const ROOT = "https://www.town.shiga-hino.lg.jp";
+export const ROOT = SITE.site.root;
 const CACHE_DIR = join(__dirname, "../../data/cache/pages");
 const OFFLINE = process.env.HINO_OFFLINE === "1";
 
