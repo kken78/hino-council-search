@@ -52,6 +52,8 @@ HINO_BUNDLE_PDF=1 npm run build
      「**Allow GitHub Actions to create and approve pull requests**」をオンにする。
    - 自動PRは人が確認してからマージする（マージで `build-deploy` が公開を更新）。GITHUB_TOKEN で作った PR では `ci` が自動実行されないため、PR 本文に精度レポートを載せている。
    - 巡回は公開とは別ジョブなので、町のサイトの不調で失敗しても公開中のサイトには影響しない（失敗は Actions の通知で分かる）。
+   - **発言ID（sid）を消したり番号をずらしたりしないこと。** sid は議会だよりダッシュボードの `data/minutes_links.json` と `questions.json` の `minutes_exchange` にも保存されており、番号がずれるとそのリンクが知らないうちに別の発言を指す。
+     データ更新のたびに `node scripts/check-sid-stability.mjs` で確かめる（`update-data` は自動で実行し、消えた・発言者が変わった sid があれば PR の題名に【sid要確認】を付けてジョブを失敗させる）。
    - fetch型は相対パスで動くため、リポジトリ名に依存しません（base設定不要）。
 4. 公開URL（例：`https://<org>.github.io/<repo>/`）を共有してレビュー依頼。
 

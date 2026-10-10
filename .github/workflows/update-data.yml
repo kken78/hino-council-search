@@ -47,10 +47,18 @@ jobs:
           node scripts/highlights.mjs
           node scripts/crawl-pages.mjs
       - name: テストと精度レポート
+        id: report
         if: steps.diff.outputs.changed == 'true'
         run: |
           npm test
           node scripts/check-proceedings.mjs | tee "$RUNNER_TEMP/check.txt"
+          # 発言ID（sid）の安定性。sid は council-dashboard のリンクにも保存されている。
+          # NG（終了コード1）でも PR 作成までは進め、PR を作った後のステップでジョブを失敗させる。全件の一覧はこのログに出る
+          if node scripts/check-sid-stability.mjs HEAD --summary "$RUNNER_TEMP/sid.md"; then
+            echo "sid=ok" >> "$GITHUB_OUTPUT"
+          else
+            echo "sid=ng" >> "$GITHUB_OUTPUT"
+          fi
           node scripts/build.mjs
       - name: PR を作成（既に開いていれば更新）
         if: steps.diff.outputs.changed == 'true'
@@ -64,6 +72,9 @@ jobs:
               .map((m) => "- " + m.name + "（" + m.id + "・PDF " + m.pdfs.length + "件" + (old.has(m.id) ? "・PDF追加" : "・新規") + "）");
             console.log(lines.join("\n") || "- （会議一覧の更新のみ）");
           ')
+          PREFIX=""
+          if [ "${{ steps.report.outputs.sid }}" = "ng" ]; then PREFIX="【sid要確認】"; fi
+          TITLE="${PREFIX}data: 会議録の自動取り込み（$(date -u +%Y-%m-%d)）"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
@@ -81,6 +92,13 @@ jobs:
             head -20 "$RUNNER_TEMP/check.txt"
             echo '```'
             echo
+            echo "## 発言IDの安定性（scripts/check-sid-stability.mjs）"
+            if [ -f "$RUNNER_TEMP/sid.md" ]; then cat "$RUNNER_TEMP/sid.md"; else echo "（スクリプトの実行に失敗しました。ジョブのログを参照）"; fi
+            if [ "${{ steps.report.outputs.sid }}" = "ng" ]; then
+              echo "> sid は議会だよりダッシュボードの data/minutes_links.json と questions.json（minutes_exchange）にも保存されています。"
+              echo "> 消えた・別の発言者を指すようになった sid があるとリンクが別の発言を指すため、原因を確かめてからマージしてください。"
+            fi
+            echo
             echo "確認のうえマージしてください（マージすると公開サイトが更新されます）。"
             echo "一般質問者の不一致や採決結果の取りこぼしが増えていれば、解析器（scripts/lib/proceedings.mjs）の調整が必要です。"
             echo
@@ -89,7 +107,12 @@ jobs:
           # 既に開いている自動PRがあれば本文だけ更新（gh pr edit は Projects classic 廃止の影響で失敗するため REST を使う）
           NUM=$(gh pr list --head "$BRANCH" --state open --json number -q '.[0].number')
           if [ -n "$NUM" ]; then
-            gh api -X PATCH "repos/${{ github.repository }}/pulls/$NUM" -F "body=@$RUNNER_TEMP/body.md" >/dev/null
+            gh api -X PATCH "repos/${{ github.repository }}/pulls/$NUM" -f "title=$TITLE" -F "body=@$RUNNER_TEMP/body.md" >/dev/null
           else
-            gh pr create --base main --head "$BRANCH" --title "data: 会議録の自動取り込み（$(date -u +%Y-%m-%d)）" --body-file "$RUNNER_TEMP/body.md"
+            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$RUNNER_TEMP/body.md"
           fi
+      - name: 発言IDが変わっていればジョブを失敗させる
+        if: steps.diff.outputs.changed == 'true' && steps.report.outputs.sid == 'ng'
+        run: |
+          echo "::error::発言ID（sid）が消えたか、別の発言者を指すようになりました。PR（題名に【sid要確認】）と、このジョブの『テストと精度レポート』のログを確認してください。"
+          exit 1
