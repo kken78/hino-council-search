@@ -22,7 +22,7 @@ function refsIn(s) {
   return out;
 }
 export function expandBills(str) {
-  const s = toHalf(squash(str));
+  const s = toHalf(squash(str)).replace(/日程第\d+/g, ""); // 「議第95号から日程第29議第121号まで」
   const k = s.lastIndexOf("を除く");
   if (k >= 0) {
     // 「…を除く議第100号から…」は除外。後ろに番号が無い「議第71号の修正議決をした部分を除く部分」は除外ではない
@@ -113,7 +113,7 @@ function topicOf(answer) {
 // ── 議長発言の読み取り ───────────────────────────────────
 // 場面切替の決まり文句（出現位置順に適用し、最後のものが有効）
 const PHRASES = [
-  [/日程第[0-9０-９]+/g, "agenda"],
+  [/(?<!あわせて、?|から)日程第[0-9０-９]+/g, "agenda"], // 「あわせて、日程第30…」「日程第3から日程第29まで」の後側は同じ場面の続き
   [/一般質問を(行います|許可|続行|続け)|順次発言を許可|一般質問に入ります/g, "ippan"],
   [/委員長報告に対する質疑/g, "reportqa"],
   [/質疑に入ります|質疑を行います|質疑は(ございませんか|ありませんか)|質疑ございませんか|ほかに質疑/g, "shitsugi"],
@@ -171,7 +171,8 @@ export function parseDay(speeches, { date = null, pdf = null, agenda = [] } = {}
       hits.sort((a, b) => a[0] - b[0]);
       for (const v of votesIn(sp.text, ctxBills)) segs.push({ kind: "vote", date, pdf, sid: sp.sid, ...v });
       // 文脈議案：日程・採決の対象として読み上げられた議案
-      const k = t.lastIndexOf("日程第");
+      let k = -1;
+      for (const x of t.matchAll(/(?<!あわせて、?|から)日程第/g)) k = x.index;
       const b = expandBills(k >= 0 ? t.slice(k) : t);
       if (b.length && /日程第|議題|採決|付託|提案理由/.test(t)) ctxBills = b;
       for (const [, act] of hits) {
