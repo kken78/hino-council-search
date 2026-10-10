@@ -41,9 +41,16 @@ HINO_BUNDLE_PDF=1 npm run build
 ## 4-A. オンライン公開（GitHub Pages）
 1. GitHub にリポジトリを作成して push。
 2. Settings → Pages → Source を **GitHub Actions** に設定。
-3. 同梱の `.github/workflows/build-deploy.yml` が
-   `crawl → extract → index →（任意）enrich/embed → build → deploy(dist/online)` を実行。
-   - 既定で毎週月曜に自動再ビルド（新しい会議録を自動反映）。手動実行は workflow_dispatch。
+3. 同梱のワークフロー（`.github/workflows/`）は3つ。
+   | ワークフロー | いつ | 何をする |
+   |---|---|---|
+   | `build-deploy.yml` | main への push | コミット済みの索引（`public/data/`）から `build.mjs` でビルドし、`dist/online` を Pages に公開（巡回はしない） |
+   | `update-data.yml` | 毎週月曜 6:00 JST（手動実行も可） | 会議録一覧を巡回し、新しい会議・PDFがあれば `extract → index → link-bulletin → highlights → crawl-pages` を実行して、精度レポート付きの PR（`data/auto-update` ブランチ）を作る。既に開いていれば更新 |
+   | `ci.yml` | PR・main への push | `npm test`・精度レポート・MCPの構文チェック・本番ビルド |
+   - `update-data.yml` が PR を作るには、Settings → Actions → General → Workflow permissions の
+     「**Allow GitHub Actions to create and approve pull requests**」をオンにする。
+   - 自動PRは人が確認してからマージする（マージで `build-deploy` が公開を更新）。GITHUB_TOKEN で作った PR では `ci` が自動実行されないため、PR 本文に精度レポートを載せている。
+   - 巡回は公開とは別ジョブなので、町のサイトの不調で失敗しても公開中のサイトには影響しない（失敗は Actions の通知で分かる）。
    - fetch型は相対パスで動くため、リポジトリ名に依存しません（base設定不要）。
 4. 公開URL（例：`https://<org>.github.io/<repo>/`）を共有してレビュー依頼。
 

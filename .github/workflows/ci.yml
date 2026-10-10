@@ -1,0 +1,25 @@
+name: ci
+# PR・push のたびに、解析器のテスト・審議構造の精度チェック・MCP の構文・本番ビルドを確認する。
+# 外部パッケージ不要（Node 標準のみ）。
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: 解析器の回帰テスト
+        run: npm test
+      - name: 審議構造の精度レポート
+        run: node scripts/check-proceedings.mjs
+      - name: 統合MCPサーバーの構文チェック
+        run: node --check mcp/hino-council-mcp.mjs
+      - name: 本番ビルド（dist/online・オフラインHTML）
+        run: node scripts/build.mjs
