@@ -32,12 +32,14 @@ export async function pdfToText(buf) {
 
 async function run() {
   const meetings = JSON.parse(readFileSync(MEET, "utf8"));
+  // HINO_FORCE=key1,key2 … 指定キーだけキャッシュを無視して作り直す（欠落・破損テキストの再抽出用）
+  const force = new Set((process.env.HINO_FORCE || "").split(",").map((s) => s.trim()).filter(Boolean));
   let done = 0, cached = 0, failed = 0;
   for (const m of meetings) {
     for (const pdf of m.pdfs) {
       const key = textKey(m.id, pdf);
       const txtPath = join(TEXT_DIR, key + ".txt");
-      if (existsSync(txtPath)) { cached++; continue; }
+      if (existsSync(txtPath) && !force.has(key)) { cached++; continue; }
       try {
         const buf = await fetchBuffer(pdf.url);
         writeFileSync(join(PDF_DIR, key + ".pdf"), buf);
