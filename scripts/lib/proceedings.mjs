@@ -60,21 +60,32 @@ function normResult(r) {
 }
 const METHOD = [[/起立全員|全員起立/, "起立全員"], [/起立多数/, "起立多数"], [/起立少数/, "起立少数"], [/異議なし|異議がない/, "異議なし"]];
 // 議長発言中の「よって、〈案件〉は、〈結果〉と決しました」を全件拾う。案件が「本案」等なら直前の文脈の議案を使う。
-function votesIn(text, ctxBills) {
+function votesIn(text, ctxBills, agenda = []) {
   const out = [];
   const t = squash(text);
   // 2つ目の選択肢は選挙（「よって、議長に14番、X君が当選されました」）。番号を言わないので日程の選第を使う。
   // 「ご異議なしと認め、名簿表のとおり選任することに決しました」のように「よって」が無い言い方もある
-  const re = /(?:よって|と認め(?:ます)?)[、。]?(?:(?:(.{1,600}?)(?:については|につきましては|は)、?)?(.{1,60}?)(?:と|に)?(?:決しました|決定(?:いたし|し)ました)|(.{1,120}?)当選されました)/g;
+  const re = /(?:よって|と認め(?:ます)?)[、。]?(?:(?:(.{1,600}?)(?:については|につきましては|について、|は)、?)?(.{1,60}?)(?:と|に)?(?:決しました|決定(?:いたし|し)ました)|(.{1,120}?)当選されました)/g;
   let m, last = 0;
   while ((m = re.exec(t))) {
     const elect = m[3] != null;
     const subj = (elect ? m[3] : m[1]) || "";
     let result = elect ? "当選" : normResult(m[2]);
+    // 委員会の設置・定数変更など「…することに決しました」。決算の付託（「設置し、審査することに」）は採決ではないので除く
+    let byTitle = null;
+    if (!result && !elect) {
+      const kw = (m[2].match(/設置|定数/) || [])[0];
+      if (kw) {
+        // 件名に同じ語を含む議案（「決算特別委員会の設置について」「委員の定数の変更について」）だけに結果を付ける。
+        // 主語の決算議案（「議第69号から議第77号まで…を設置し、審査することに」）は付託であり採決ではないので対象外になる
+        byTitle = [...new Set([...expandBills(subj), ...ctxBills])].filter((b) => (agenda.find((a) => a.no === b) || { title: "" }).title.includes(kw));
+        if (byTitle.length) result = "原案可決";
+      } else if (!/審査|付託/.test(m[2]) && expandBills(subj).length && /とすること|にすること/.test(m[2])) result = "原案可決";
+    }
     if (!elect && /撤回/.test(subj) && /許可/.test(m[2])) result = "撤回";
     else if (result === "原案可決" && /修正議決/.test(subj)) result = "修正可決";
     if (!result) { last = re.lastIndex; continue; }
-    let bills = elect ? [] : expandBills(subj);
+    let bills = byTitle && byTitle.length ? byTitle : elect ? [] : expandBills(subj);
     if (!bills.length && /本案|本件|本請願|本決議|本意見書|各案|以上|本議案|本陳情/.test(subj)) bills = ctxBills;
     if (!bills.length && (result === "当選" || result === "選任")) bills = ctxBills.filter((b) => /^選第/.test(b));
     if (!bills.length) { last = re.lastIndex; continue; }
@@ -97,18 +108,29 @@ function styleOf(text) {
 // 新しい問いに入ったか（一問一答で「次に、２問目」など）。最初の質問は常に新規。
 const NEWQ = /([0-9０-９一二三四五六七八九]+)(問目|つ目の質問|番目の質問|点目の質問)|次の質問|大きな.{0,3}([0-9０-９一二三四五]+)(問目|点目)|次に.{0,15}について.{0,10}(質問|伺)/;
 // 答弁冒頭の「ただいま、〇〇についてご質問を頂きました」から質問項目を取る。
-const TOPIC = /^(?:[^。]{0,40}?(?:ただいま|今|まず|先ほど)[、,]?)?(?:[^。]{0,20}?議員(?:さん)?(?:の方|のほう)?から[、,]?)?(.{2,60}?)(?:について|に関して|につきまして|の件で|のことで)[、,]?(?:の)?(?:ご質問|ご質疑|お尋ね|質問|ご提言|ご提案)/;
-function topicOf(answer) {
-  const head = squash(answer).slice(0, 160).replace(/^(おはようございます|こんにちは|こんばんは|改めまして)[。、]?/g, "");
-  const m = head.match(TOPIC);
-  if (!m) return null;
-  let t = m[1].replace(/^(まず|最初に|それでは|では|はい|続きまして|次に)[、,]?/, "").replace(/^[、,「]+|[」、,]+$/g, "");
+// 答弁：「ただいま、〇〇についてご質問を頂きました」「〇〇について、一問一答でご質問いただきました」「〇〇に関しましてご質問」
+const TOPIC_A = /([^。]{2,70}?)(?:について|に関して|に関しまして|につきまして|の件で|のことで)[、,]?[^。]{0,14}?(?:ご質問|ご質疑|お尋ね|質問を|ご提言|ご提案)/;
+// 質問：「まず１つ目ですけれども、〇〇についてということで、お尋ねいたします」「はじめに、〇〇について、一問一答で質問いたします」
+const TOPIC_Q = /(?:はじめに|初めに|まず|最初に|次に|続いて|[0-9０-９一二三四五]+(?:つ目|点目|問目|番目)(?:の質問)?(?:ですけれども|ですけども|ですが|は|として|に)?)[、,]?([^。]{3,60}?)(?:について|に関して|ということで)(?:ということで)?[、,]?[^。]{0,14}?(?:質問|お尋ね|伺|お聞き)/;
+function cleanTopic(raw) {
+  let t = raw.replace(/^(まず|最初に|それでは|では|はい|続きまして|次に|さて|また)[、,]?/, "").replace(/^[、,「]+|[」、,]+$/g, "");
   t = t.replace(/^.*?(?:から|より)[、,]/, ""); // 「谷口議員から、」等の残り
-  t = t.split("。").pop().replace(/^(ただいまは?|今|現在|まず|本日は?)[、,]?/, ""); // 挨拶・前置きの文を落とす
-  t = t.replace(/^.*?議員(?:さん)?(?:より|から)[、,]?/, "").replace(/^は[、,]?/, ""); // 「後藤議員より」「（まず）は、」
-  if (t.length < 2 || /^(その|この|今の|ただいまの|先ほどの)/.test(t) || /再質問|再々質問/.test(t)) return null;
+  t = t.replace(/^(ただいまは?|今|現在|まず|本日は?|さて)[、,]?/, "");
+  t = t.replace(/^.*?議員(?:さん)?(?:の方|のほう)?(?:より|から)[、,]?/, "").replace(/^は[、,]?/, ""); // 「後藤議員より」「（まず）は、」
+  t = t.replace(/^(とりわけ|特に)[、,]?(まず)?[、,]?/, "");
+  if (t.length < 3 || /^(その|この|今の|ただいまの|先ほどの|これ|それ)/.test(t) || /再質問|再々質問|質問/.test(t)) return null;
   return t.slice(0, 50);
 }
+// 冒頭400字を文ごとに見て、最初に当たった言い回しから質問項目を取る（挨拶の文は自然に読み飛ばされる）
+function firstMatch(text, re) {
+  for (const sen of squash(text).slice(0, 400).split("。")) {
+    const m = sen.match(re);
+    if (m) { const t = cleanTopic(m[1]); if (t) return t; }
+  }
+  return null;
+}
+const topicOf = (answer) => firstMatch(answer, TOPIC_A);
+const topicOfQuestion = (q) => firstMatch(q, TOPIC_Q);
 
 // ── 議長発言の読み取り ───────────────────────────────────
 // 場面切替の決まり文句（出現位置順に適用し、最後のものが有効）
@@ -169,7 +191,7 @@ export function parseDay(speeches, { date = null, pdf = null, agenda = [] } = {}
       const hits = [];
       for (const [re, act] of PHRASES) for (const m of t.matchAll(re)) hits.push([m.index, act]);
       hits.sort((a, b) => a[0] - b[0]);
-      for (const v of votesIn(sp.text, ctxBills)) segs.push({ kind: "vote", date, pdf, sid: sp.sid, ...v });
+      for (const v of votesIn(sp.text, ctxBills, agenda)) segs.push({ kind: "vote", date, pdf, sid: sp.sid, ...v });
       // 文脈議案：日程・採決の対象として読み上げられた議案
       let k = -1;
       for (const x of t.matchAll(/(?<!あわせて、?|から)日程第/g)) k = x.index;
@@ -220,7 +242,7 @@ export function parseDay(speeches, { date = null, pdf = null, agenda = [] } = {}
       for (let k = 0; k < s._texts.length; k++) {
         if (s._texts[k].t !== "q") continue;
         const ans = s._texts.slice(k + 1).find((x) => x.t === "a");
-        const tp = ans && topicOf(ans.text);
+        const tp = (ans && topicOf(ans.text)) || topicOfQuestion(s._texts[k].text);
         if (tp && !topics.some((x) => x.title === tp)) topics.push({ n: s.turns[k][2], title: tp, src: "minutes" });
       }
       s.topics = topics;

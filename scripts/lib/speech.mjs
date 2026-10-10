@@ -141,9 +141,10 @@ export function extractGian(raw) {
     const no = `${m[1]}${toHalf(m[2])}号`;
     let title = (m[3] || "").replace(/[\s　]+/g, "").replace(/^[、，]/, "")
       .replace(/[…・]{2,}.*$/s, "")        // リーダー線「……」以降（ページ番号・次項目ごと）を除去
+      .replace(/〔.*$/s, "")               // 目次の審議区分「〔質疑・討論・採決〕」
       .replace(/\d+[－-]\d+[．.\d]*.*$/s, "") // 「1－26１．」などページ参照以降を除去
       .replace(/^から$/, "")              // 「議第68号 から」の範囲断片を空に
-      .replace(/\d+[-－]\d+$/, "").replace(/[－‐-]\d+[－‐-]?$/, "").slice(0, 80);
+      .replace(/\d+[-－]\d+$/, "").replace(/[－‐-]\d+[－‐-]?$/, "").replace(/[…‥]+$/, "").slice(0, 80);
     if (!title) continue;
     if (!items.has(no)) items.set(no, { no, kind: guessKind(no + title), title });
   }

@@ -1,12 +1,14 @@
 // highlights.mjs — 「よく検索される語」を置き換える注目テーマを生成し public/data/highlights.json に出力。
 //   raised   … 複数の議員が一般質問で取り上げているテーマ
 //   official … 町（議案・当局答弁）が重点として扱っているテーマ
-// テーマ候補は Claude で抽出（ANTHROPIC_API_KEY があるとき）。無ければ決定論フォールバック。
+// テーマは dict/highlight-themes.json（手で育てる定義・政策体系順）があればそれを使い、件数だけ毎回集計する。
+// 定義が無いときは Claude で抽出（ANTHROPIC_API_KEY があるとき）、それも無ければ決定論フォールバック。
 // 会議数・議員数などの定量シグナルは常に決定論で付与するため、reason は事実ベース。
 //
 // 使い方:
 //   node scripts/highlights.mjs            … AIあり（要 ANTHROPIC_API_KEY）／無ければ自動でフォールバック
 //   HINO_HL_NOAI=1 node scripts/highlights.mjs … AIを使わず決定論のみ
+//   HINO_HL_CURATED=0 node scripts/highlights.mjs … 定義ファイルを使わず抽出する
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -21,6 +23,7 @@ const MODEL = process.env.HINO_HL_MODEL || "claude-sonnet-4-6";
 const TOP = Number(process.env.HINO_HL_TOP || 8);      // 各グループの表示件数
 const NOAI = process.env.HINO_HL_NOAI === "1" || !process.env.ANTHROPIC_API_KEY;
 
+const CURATED = process.env.HINO_HL_CURATED !== "0" && existsSync(join(root, "dict/highlight-themes.json"));
 const index = J("public/data/index.json");
 const gian  = existsSync(join(root, "public/data/gian.json")) ? J("public/data/gian.json") : {};
 
@@ -116,7 +119,29 @@ function buildThemes(candidates) {
   return out.slice(0, TOP).map((x) => ({ label: x.label, query: x.query, reason: `${x.meetings}会議・${x.members}議員が取り上げ` }));
 }
 
+// 定義ファイルの順（政策体系順）を保ったまま、件数を付ける
+function buildCurated(defs) {
+  return defs.map((t) => {
+    const s = score(t.keywords && t.keywords.length ? t.keywords : [t.label]);
+    return s && s.members ? { label: t.label, query: toQuery(t.keywords || [t.label]), reason: `${s.meetings}会議・${s.members}議員が取り上げ` } : null;
+  }).filter(Boolean);
+}
+
 async function run() {
+  if (CURATED) {
+    const defs = J("dict/highlight-themes.json").themes;
+    const list = buildCurated(defs);
+    const meetings = new Set(index.map((e) => e.meetingId)).size;
+    const result = {
+      generatedAt: new Date().toISOString().slice(0, 10), source: "curated(dict/highlight-themes.json)",
+      note: `日野町議会 会議録(${meetings}会議/${index.length.toLocaleString("en-US")}発言)を分析。政策体系順に配列。数値は議員発言の実データ集計。`,
+      label: "議会で議論になっているテーマ", themes: list,
+    };
+    writeFileSync(join(root, "public/data/highlights.json"), JSON.stringify(result, null, 2));
+    console.log(`highlights.json: ${list.length} テーマ（source=${result.source}）`);
+    for (const t of list) console.log(`  ${t.label}：${t.reason}`);
+    return;
+  }
   let themes, source;
   if (NOAI) { themes = extractThemesFallback(); source = "fallback(no-ai)"; }
   else {

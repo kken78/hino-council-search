@@ -11,12 +11,13 @@
     "index": "node scripts/index.mjs",
     "link-bulletin": "node scripts/link-bulletin.mjs",
     "check": "node scripts/check-proceedings.mjs",
+    "highlights": "node scripts/highlights.mjs",
     "split": "node scripts/index.mjs",
     "enrich": "node scripts/enrich.mjs",
     "embed": "node scripts/embed.mjs",
     "candidates": "node scripts/dict-candidates.mjs",
     "build": "node scripts/build.mjs",
-    "build:data": "npm run crawl && npm run extract && npm run index && npm run link-bulletin && npm run check",
+    "build:data": "npm run crawl && npm run extract && npm run index && npm run link-bulletin && npm run highlights && npm run check",
     "preview": "node scripts/build-preview.mjs"
   },
   "devDependencies": {
