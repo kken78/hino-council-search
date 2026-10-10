@@ -24,7 +24,7 @@ npm run index     # 発言分割・正規化・議案抽出 → public/data/inde
 ```bash
 export ANTHROPIC_API_KEY=...   # 要約・分類（enrich）
 npm run enrich
-npm install @xenova/transformers && npm run embed   # public/data/vectors.json（任意）
+npm install --no-save @xenova/transformers && npm run embed   # public/data/vectors.json（任意）
 ```
 
 ## 3. フロントを生成（ノービルド）
