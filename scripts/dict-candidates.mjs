@@ -5,13 +5,14 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { readIndex } from "./lib/data.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dirname, "../public/data");
 const DICT = join(__dirname, "../dict");
 const J = (p) => JSON.parse(readFileSync(p, "utf8"));
 
-const index = J(join(DATA, "index.json"));
+const index = readIndex(DATA);
 const gian = existsSync(join(DATA, "gian.json")) ? J(join(DATA, "gian.json")) : {};
 const variants = J(join(DICT, "variants.json"));
 const topics = existsSync(join(DICT, "topics.json")) ? J(join(DICT, "topics.json")) : [];

@@ -9,7 +9,8 @@
  *
  * データソース（起動時に取得・ローカルにキャッシュ）：
  *   - council-dashboard  : docs/data/questions.json（議会だより #24〜 の問・答、出典URL付き）
- *   - hino-council-search: public/data/{meetings,index,gian}.json（全会議・発言単位索引）
+ *   - hino-council-search: public/data/{meetings,gian}.json と発言索引
+ *                          （index-manifest.json＋index/<年>.json。分割前のデータなら index.json）
  *                          public/data/{proceedings,meeting_pages}.json（審議構造・会議ページ対応。任意：無ければ従来の推定で動く）
  *
  * 使い方（Claude Desktop の claude_desktop_config.json）:
@@ -55,7 +56,7 @@ const CACHE_DIR =
   process.env.HINO_MCP_CACHE || path.join(os.homedir(), ".cache", "hino-council-mcp");
 const MAX_AGE_MS = Number(process.env.HINO_MCP_MAX_AGE_HOURS || 24) * 3600 * 1000;
 
-const SERVER_INFO = { name: "hino-council-mcp", version: "0.3.0" };
+const SERVER_INFO = { name: "hino-council-mcp", version: "0.4.0" };
 
 // クライアント（Claude）への利用方針。冒頭のデータ自己申告は起動時に実データから生成する
 // （council-dashboard はフォークで他自治体運用があるため、「日野町」をハードコードしない）。
@@ -100,10 +101,25 @@ async function loadJson(name, url) {
   }
 }
 
+/**
+ * 発言索引。年別分割（index-manifest.json＋index/<年>.json）を優先し、無ければ分割前の index.json。
+ * 目録の順に連結すると、分割前と同じ並び（＝発言順）になる。
+ */
+async function loadIndex() {
+  const man = await loadOptional("index-manifest.json", `${SEARCH_BASE}/index-manifest.json`, "分割前の index.json を読みます。");
+  if (man && Array.isArray(man.shards)) {
+    const parts = await Promise.all(
+      man.shards.map((sh) => loadJson(`index__${sh.year ?? "unknown"}.json`, `${SEARCH_BASE}/${sh.file}`))
+    );
+    return parts.flat();
+  }
+  return loadJson("index.json", `${SEARCH_BASE}/index.json`);
+}
+
 /** 任意データ（無くても動く）。取得できずキャッシュも無ければ null */
-async function loadOptional(name, url) {
+async function loadOptional(name, url, fallbackNote = "従来の推定で動作します。") {
   try { return await loadJson(name, url); }
-  catch (e) { log(`任意データ ${name} なし（${e.message}）。従来の推定で動作します。`); return null; }
+  catch (e) { log(`任意データ ${name} なし（${e.message}）。${fallbackNote}`); return null; }
 }
 
 // ---------------------------------------------------------------- 正規化（NFKC＋空白除去＋異体字）
@@ -181,7 +197,7 @@ async function boot() {
   const [dash, meetings, idx, gian, proc, pages] = await Promise.all([
     loadJson("questions.json", DASH_URL),
     loadJson("meetings.json", `${SEARCH_BASE}/meetings.json`),
-    loadJson("index.json", `${SEARCH_BASE}/index.json`),
+    loadIndex(),
     loadJson("gian.json", `${SEARCH_BASE}/gian.json`),
     loadOptional("proceedings.json", `${SEARCH_BASE}/proceedings.json`),
     loadOptional("meeting_pages.json", `${SEARCH_BASE}/meeting_pages.json`),

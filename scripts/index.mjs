@@ -1,4 +1,4 @@
-// index.mjs — 抽出テキストを発言分割し index.json / gian.json を生成。
+// index.mjs — 抽出テキストを発言分割し、発言索引（年別の index/<year>.json＋目録）/ gian.json / proceedings.json を生成。
 // toc.json の indexed フラグ（全文検索可能か）も更新する。
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { splitSpeeches, extractGian, extractGianFromToc, detectAgendaRef, guessKind, stripPageHeads } from "./lib/speech.mjs";
 import { textKey } from "./lib/keys.mjs";
 import { parseDay } from "./lib/proceedings.mjs";
+import { writeIndex } from "./lib/data.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dirname, "../public/data");
@@ -161,7 +162,7 @@ function run() {
   }
 
   mkdirSync(DATA, { recursive: true });
-  writeFileSync(join(DATA, "index.json"), JSON.stringify(index));
+  const manifest = writeIndex(DATA, index);
   writeFileSync(join(DATA, "gian.json"), JSON.stringify(gian, null, 2));
   writeFileSync(join(DATA, "proceedings.json"), JSON.stringify(proceedings));
 
@@ -174,7 +175,7 @@ function run() {
   }
 
   const speakers = new Set(index.map((e) => e.name));
-  console.log(`index.json: ${index.length} 発言 / ${indexedIds.size} 会議 / 発言者 ${speakers.size} 名`);
+  console.log(`index: ${index.length} 発言 / ${indexedIds.size} 会議 / 発言者 ${speakers.size} 名（${manifest.shards.length} 年に分割）`);
   const segs = Object.values(proceedings).flatMap((p) => p.segments);
   const cnt = (k) => segs.filter((s) => s.kind === k).length;
   console.log(`proceedings.json: 一般質問 ${cnt("ippan")} / 議案質疑 ${cnt("shitsugi")} / 委員長報告 ${cnt("report")} / 討論 ${cnt("debate")} / 提案説明 ${cnt("proposal")} / 採決 ${cnt("vote")}`);

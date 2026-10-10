@@ -3,10 +3,11 @@
 //   ・採決：議案（報第＝報告は採決なしなので除く）のうち採決結果が取れた割合
 //   ・未分類：議長・会議録情報以外の発言のうち、どの場面にも入らなかった割合
 // 使い方: node scripts/check-proceedings.mjs [--verbose]
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, statSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { textKey } from "./lib/keys.mjs";
+import { readIndex } from "./lib/data.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dirname, "../public/data");
@@ -14,7 +15,7 @@ const TEXT_DIR = join(__dirname, "../data/text");
 const J = (f) => JSON.parse(readFileSync(join(DATA, f), "utf8"));
 const verbose = process.argv.includes("--verbose");
 
-const meetings = J("meetings.json"), gian = J("gian.json"), index = J("index.json"), proc = J("proceedings.json");
+const meetings = J("meetings.json"), gian = J("gian.json"), index = readIndex(DATA), proc = J("proceedings.json");
 const sq = (s) => String(s || "").replace(/[\s　]/g, "").replace(/髙/g, "高").replace(/﨑/g, "崎");
 
 // 目次の「一般質問 N番 姓 名君 …… D－P」から質問者を取る
@@ -69,6 +70,12 @@ const pct = (a, b) => (b ? ((100 * a) / b).toFixed(1) + "%" : "-");
 console.log(`一般質問：目次の質問者 ${tIp} 名中 ${tIpOk} 名を検出（${pct(tIpOk, tIp)}）`);
 console.log(`採決結果：議案（報第を除く）${tBills} 件中 ${tVoted} 件で取得（${pct(tVoted, tBills)}）`);
 console.log(`場面の分類：議長以外の発言 ${tSp} 件中 ${tCovered} 件をいずれかの場面に分類（${pct(tCovered, tSp)}）`);
+// 公開データのファイルサイズ（GitHub は 50MB で警告、100MB で拒否）
+const files = [...readdirSync(DATA).filter((f) => f.endsWith(".json")), ...(existsSync(join(DATA, "index")) ? readdirSync(join(DATA, "index")).map((f) => "index/" + f) : [])];
+const sizes = files.map((f) => [f, statSync(join(DATA, f)).size]).sort((a, b) => b[1] - a[1]);
+const mb = (n) => (n / 1048576).toFixed(1) + "MB";
+console.log(`ファイルサイズ：最大 ${sizes[0][0]} ${mb(sizes[0][1])}（公開データ合計 ${mb(sizes.reduce((s, x) => s + x[1], 0))}）`);
+if (sizes[0][1] > 45 * 1048576) console.log(`  【警告】${sizes[0][0]} が 45MB を超えています。GitHub の上限（50MB警告・100MB拒否）に近づいています。`);
 console.log(`\n要確認の会議：${problems.length} 件`);
 for (const p of problems) {
   const parts = [];

@@ -13,6 +13,7 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { buildNormStr, normTerm } from "./lib/normalize.mjs";
+import { readIndex } from "./lib/data.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -24,7 +25,7 @@ const TOP = Number(process.env.HINO_HL_TOP || 8);      // 各グループの表�
 const NOAI = process.env.HINO_HL_NOAI === "1" || !process.env.ANTHROPIC_API_KEY;
 
 const CURATED = process.env.HINO_HL_CURATED !== "0" && existsSync(join(root, "dict/highlight-themes.json"));
-const index = J("public/data/index.json");
+const index = readIndex(join(root, "public/data"));
 const gian  = existsSync(join(root, "public/data/gian.json")) ? J("public/data/gian.json") : {};
 
 // 役職判定（フロントの roleCat と同じ）

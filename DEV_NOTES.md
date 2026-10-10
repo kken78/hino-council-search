@@ -12,17 +12,17 @@ README.md の仕様に沿って実装したリポジトリです。仕様本文�
 - `scripts/crawl.mjs / extract.mjs / index.mjs` … 巡回→抽出→索引
 - `scripts/enrich.mjs / embed.mjs` … 任意（Claude要約・分類／埋め込み）。鍵やライブラリが無ければ自動スキップ
 - `dict/` … variants/yomi/synonyms（日野町の初期データ入り）
-- `src/` … Vite+React フロント（search.js が正規化検索の本体、semantic.js は任意）
+- フロントは `scripts/preview.tpl.html`（バニラ単一ページ）。旧 Vite+React 版の `src/` は 2026-10 に削除（git 履歴に残る）
 
 ## 本番（GitHub Actions / ネット接続あり）での実行
 ```bash
 npm install
 npm run crawl     # 日野町HPを巡回 → public/data/meetings.json（全会議）
 npm run extract   # 各PDFをDL & pdfjsでテキスト化 → data/text/（キャッシュ）
-npm run index     # 発言分割・正規化・議案抽出 → public/data/index.json, gian.json
+npm run index     # 発言分割・正規化・議案抽出 → public/data/index/<年>.json（＋index-manifest.json）, gian.json, proceedings.json
 npm run enrich    # 任意（ANTHROPIC_API_KEY）
 npm run embed     # 任意（@xenova/transformers）
-npm run dev       # フロント開発サーバ
+npm run preview   # 確認用 preview.html を生成（ブラウザで開く）
 ```
 全会議へ広げるには環境変数を付けずに `npm run crawl` を実行（フィルタ無し）。
 

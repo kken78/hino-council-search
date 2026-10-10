@@ -7,12 +7,13 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { textKey } from "./lib/keys.mjs";
 import { buildNormStr } from "./lib/normalize.mjs";
+import { readIndex, writeIndex } from "./lib/data.mjs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const R = (p) => readFileSync(join(root, p), "utf8");
 const J = (p) => JSON.parse(R(p));
 
-const big = { meetings: J("public/data/meetings.json"), index: J("public/data/index.json"), gian: J("public/data/gian.json"), toc: J("public/data/toc.json") };
+const big = { meetings: J("public/data/meetings.json"), index: readIndex(join(root, "public/data")), gian: J("public/data/gian.json"), toc: J("public/data/toc.json") };
 // 審議構造（任意）。無ければ UI は従来表示のまま動く。
 const proceedings = existsSync(join(root, "public/data/proceedings.json")) ? J("public/data/proceedings.json") : null;
 const small = { topics: J("dict/topics.json"), dict: { variants: J("dict/variants.json"), synonyms: J("dict/synonyms.json"), yomi: J("dict/yomi.json") }, highlights: existsSync(join(root, "public/data/highlights.json")) ? J("public/data/highlights.json") : null, pages: existsSync(join(root, "public/data/meeting_pages.json")) ? J("public/data/meeting_pages.json") : null };
@@ -40,7 +41,7 @@ if (process.env.HINO_BUNDLE_PDF) {
   console.log("PDF同梱: " + n + " 件を相対パス化");
 }
 
-// 配信・配布物にだけ norm を付与（リポジトリの public/data/index.json は norm 無しで軽く保つ）。
+// 配信・配布物にだけ norm を付与（リポジトリの発言索引は norm 無しで軽く保つ）。
 // 実行時の正規化ゼロ＝初回検索を即応答に。フロントは e.norm があればそれを使う。
 for (const e of big.index) if (e.norm == null) e.norm = buildNormStr(e.text || "");
 
@@ -53,15 +54,19 @@ tpl = tpl.replace(/<div class="note">[\s\S]*?<\/div>\n/, "")
 const allData = { ...big, ...small, proceedings };
 writeFileSync(join(root, "dist/日野町議会-会議録検索.html"), tpl.replace("/*__BOOT__*/", "start(" + JSON.stringify(allData) + ");"));
 
-// 2) オンライン用：dict/topics内蔵＋大きいJSONはfetch
+// 2) オンライン用：dict/topics内蔵＋大きいJSONはfetch（発言索引は年別ファイルを並列取得）
 const boot = "const DICT=" + JSON.stringify(small.dict) + ";const TOPICS=" + JSON.stringify(small.topics) + ";const HL=" + JSON.stringify(small.highlights) + ";const PAGES=" + JSON.stringify(small.pages) + ";"
   + "(async function(){try{const B=new URL('.',location.href).href;"
-  + "const [index,gian,toc,meetings]=await Promise.all(['data/index.json','data/gian.json','data/toc.json','data/meetings.json'].map(p=>fetch(B+p).then(r=>r.json())));"
+  + "const J=p=>fetch(B+p).then(r=>{if(!r.ok)throw new Error(p+' '+r.status);return r.json();});"
+  + "const man=await J('data/index-manifest.json');"
+  + "const [shards,gian,toc,meetings]=await Promise.all([Promise.all(man.shards.map(s=>J('data/'+s.file))),J('data/gian.json'),J('data/toc.json'),J('data/meetings.json')]);"
+  + "const index=shards.flat();"
   + "const proceedings=await fetch(B+'data/proceedings.json').then(r=>r.ok?r.json():null).catch(()=>null);"
   + "start({index,gian,toc,meetings,proceedings,dict:DICT,topics:TOPICS,highlights:HL,pages:PAGES});"
   + "}catch(e){document.getElementById('results').innerHTML='<div class=\"empty\">データの読み込みに失敗しました（'+e+'）。ローカルで開く場合は単一HTML版をご利用ください。</div>';}})();";
 writeFileSync(join(root, "dist/online/index.html"), tpl.replace("/*__BOOT__*/", boot));
-for (const f of ["index.json", "gian.json", "toc.json", "meetings.json"]) writeFileSync(join(root, "dist/online/data", f), JSON.stringify(big[f.replace(".json", "")]));
+writeIndex(join(root, "dist/online/data"), big.index);
+for (const f of ["gian.json", "toc.json", "meetings.json"]) writeFileSync(join(root, "dist/online/data", f), JSON.stringify(big[f.replace(".json", "")]));
 if (proceedings) writeFileSync(join(root, "dist/online/data/proceedings.json"), JSON.stringify(proceedings));
 
 console.log("生成: dist/日野町議会-会議録検索.html（オフライン）, dist/online/index.html（fetch型）");
