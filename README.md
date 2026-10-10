@@ -142,7 +142,9 @@ gikai-search/
 │  ├─ crawl.mjs          # 巡回 → meetings.json ＋ toc.json
 │  ├─ crawl-pages.mjs    # 「本会議のご案内」(32-3-5)巡回 → meeting_pages.json
 │  ├─ extract.mjs        # PDF → テキスト（pdfjs, data/text にキャッシュ）
-│  ├─ index.mjs          # 発言分割・議案抽出 → index/gian、toc更新
+│  ├─ index.mjs          # 発言分割・議案抽出・審議構造 → index/gian/proceedings、toc更新
+│  ├─ link-bulletin.mjs  # 議会だより(council-dashboard)の一般質問見出しを proceedings/gian へ結びつけ
+│  ├─ check-proceedings.mjs # 審議構造の精度レポート
 │  ├─ enrich.mjs         # 任意（Claude：要約・分類）
 │  ├─ embed.mjs          # 任意（埋め込み）
 │  ├─ highlights.mjs     # 注目テーマ生成 → highlights.json（AI/フォールバック）
@@ -153,7 +155,8 @@ gikai-search/
 │  └─ lib/
 │     ├─ normalize.mjs   # NFKC＋異体字＋空白除去（buildNorm / buildNormStr / normTerm）
 │     ├─ eras.mjs        # 元号⇔西暦・漢数字
-│     ├─ speech.mjs      # 発言分割・議案抽出・区分推定
+│     ├─ speech.mjs      # 発言分割・議案抽出・区分推定・ページ番号除去
+│     ├─ proceedings.mjs # 審議構造（一般質問・質疑・委員長報告・討論・採決）の解析
 │     ├─ keys.mjs        # テキストキャッシュのキー生成
 │     └─ fetchx.mjs      # 取得層（native fetch+cheerio / offlineキャッシュ）
 ├─ dict/                                   # 辞書（手で育てる）
@@ -229,12 +232,43 @@ gikai-search/
 {
   "0000008489": {
     "agenda": [
-      { "no": "議第46号", "kind": "契約", "title": "工事請負契約について（町道西大路鎌掛線道路改良工事（その12））" }
+      { "no": "議第46号", "kind": "契約", "title": "工事請負契約について（町道西大路鎌掛線道路改良工事（その12））",
+        "result": "原案可決", "method": "起立全員", "committee": "産業建設常任委員会" }   // ← 3項目は任意（proceedings から付与）
     ],
-    "ippan": [ { "member": "谷口智哉", "theme": "高齢者福祉／チョイソコひの・i-Chan" } ]
+    "ippan": [ { "member": "谷口智哉", "theme": "交通・公共交通",
+                 "seat": "3番", "style": "一問一答", "topics": [ { "n": 1, "title": "チョイソコひの", "src": "minutes" } ] } ]
   }
 }
 ```
+> `agenda[].{no,kind,title}` と `ippan[].{member,theme}` は従来どおり（MCP・旧UIが依存）。`result`（原案可決／同意／認定／採択／不採択／否決／承認／適任／選任／当選／継続審査／修正可決／撤回）・`method`（起立全員／起立多数／起立少数／異議なし）・`committee`（委員長報告から推定した付託委員会）・`decidedIn`（別の会議で採決された場合の会議ID。9月付託→12月認定の決算など）と、`ippan[]` の `seat`・`style`・`topics` は任意項目。`theme` は議会だよりの分類があれば1問目の分類。
+
+### proceedings.json（審議構造）
+```jsonc
+{
+  "0000008942": {
+    "segments": [
+      { "kind": "ippan", "date": "2026-03-06", "member": "谷口智哉", "seat": "3番", "style": "一問一答",
+        "from": "0000008942_20260306_0003", "to": "0000008942_20260306_0103",
+        "turns": [[0,"q",1],[2,"a",1],[4,"rq",1],[6,"a",1],[16,"q",2]],
+        "topics": [ { "n": 1, "title": "チョイソコひの", "src": "minutes" },
+                    { "n": 1, "title": "「チョイソコひの」を発展させていくためには…", "theme": "交通・公共交通", "src": "bulletin", "issue": 35 } ] },
+      { "kind": "shitsugi", "member": "錦戸由佳", "seat": "1番", "bills": ["議第115号"], "from": "…", "to": "…", "turns": [[0,"q",1],[2,"a",1]] },
+      { "kind": "report",   "member": "中西佳子", "seat": "12番", "committee": "総務常任委員会", "bills": ["議第100号"], "from": "…", "to": "…", "turns": [[0,"s"]] },
+      { "kind": "debate",   "member": "加藤和幸", "seat": "10番", "stance": "反対", "bills": ["議第105号"], "from": "…", "to": "…", "turns": [[0,"s"]] },
+      { "kind": "proposal", "member": "堀江和博", "role": "町長", "bills": ["議第122号"], "from": "…", "to": "…", "turns": [[0,"s"]] },
+      { "kind": "vote", "sid": "…", "bills": ["議第105号"], "result": "原案可決", "method": "起立多数", "basis": "委員長報告のとおり" }
+    ]
+  }
+}
+```
+> 会議録の議長の決まり文句から `scripts/lib/proceedings.mjs` が切り出す（index.mjs が生成）。本文は持たず、index.json の発言を `sid` で参照する。
+> - `kind`：`ippan`（一般質問）／`shitsugi`（議案質疑。`target:"委員長報告"` は委員長報告に対する質疑）／`report`（委員長報告・委員会の調査報告）／`debate`（討論）／`proposal`（提案理由の説明）／`vote`（採決結果）。
+> - `from`〜`to`：場面の最初と最後の発言の sid（同じPDF内で連番）。間の議長の進行発言も含む範囲。
+> - `turns`：`[from からの相対位置, 種別, 問番号]`。種別は `q`＝質問（新しい問）／`rq`＝再質問／`a`＝答弁／`s`＝報告・討論・説明。議長の進行発言は含めない。問番号は一般質問・議案質疑のみ。
+> - `style`：一般質問で議員が宣言した質問方式（一問一答／分割／一括、宣言が無ければ `null`）。
+> - `topics`：`src:"minutes"` は答弁冒頭（「〇〇についてご質問を頂きました」）からの推定、`src:"bulletin"` は議会だより（council-dashboard）の見出しと11分類（`link-bulletin.mjs` が付与）。
+> - `stance`：討論で本人が表明した立場（反対／賛成）。「委員長報告の不採択に反対」のような場合も表明どおり記録する。
+> - 精度は `node scripts/check-proceedings.mjs` で確認（目次の一般質問者との一致、採決結果の取得率、場面に分類できた発言の割合）。
 
 ### toc.json（年度別カタログ／全会議の目次）
 ```json

@@ -13,6 +13,8 @@ const R = (p) => readFileSync(join(root, p), "utf8");
 const J = (p) => JSON.parse(R(p));
 
 const big = { meetings: J("public/data/meetings.json"), index: J("public/data/index.json"), gian: J("public/data/gian.json"), toc: J("public/data/toc.json") };
+// 審議構造（任意）。無ければ UI は従来表示のまま動く。
+const proceedings = existsSync(join(root, "public/data/proceedings.json")) ? J("public/data/proceedings.json") : null;
 const small = { topics: J("dict/topics.json"), dict: { variants: J("dict/variants.json"), synonyms: J("dict/synonyms.json"), yomi: J("dict/yomi.json") }, highlights: existsSync(join(root, "public/data/highlights.json")) ? J("public/data/highlights.json") : null, pages: existsSync(join(root, "public/data/meeting_pages.json")) ? J("public/data/meeting_pages.json") : null };
 
 mkdirSync(join(root, "dist"), { recursive: true });
@@ -48,16 +50,18 @@ tpl = tpl.replace(/<div class="note">[\s\S]*?<\/div>\n/, "")
          .replace("<title>日野町議会 会議録 横断検索（プレビュー）</title>", "<title>日野町議会 会議録 横断検索</title>");
 
 // 1) オフライン配布用：全データ埋め込み
-const allData = { ...big, ...small };
+const allData = { ...big, ...small, proceedings };
 writeFileSync(join(root, "dist/日野町議会-会議録検索.html"), tpl.replace("/*__BOOT__*/", "start(" + JSON.stringify(allData) + ");"));
 
 // 2) オンライン用：dict/topics内蔵＋大きいJSONはfetch
 const boot = "const DICT=" + JSON.stringify(small.dict) + ";const TOPICS=" + JSON.stringify(small.topics) + ";const HL=" + JSON.stringify(small.highlights) + ";const PAGES=" + JSON.stringify(small.pages) + ";"
   + "(async function(){try{const B=new URL('.',location.href).href;"
   + "const [index,gian,toc,meetings]=await Promise.all(['data/index.json','data/gian.json','data/toc.json','data/meetings.json'].map(p=>fetch(B+p).then(r=>r.json())));"
-  + "start({index,gian,toc,meetings,dict:DICT,topics:TOPICS,highlights:HL,pages:PAGES});"
+  + "const proceedings=await fetch(B+'data/proceedings.json').then(r=>r.ok?r.json():null).catch(()=>null);"
+  + "start({index,gian,toc,meetings,proceedings,dict:DICT,topics:TOPICS,highlights:HL,pages:PAGES});"
   + "}catch(e){document.getElementById('results').innerHTML='<div class=\"empty\">データの読み込みに失敗しました（'+e+'）。ローカルで開く場合は単一HTML版をご利用ください。</div>';}})();";
 writeFileSync(join(root, "dist/online/index.html"), tpl.replace("/*__BOOT__*/", boot));
 for (const f of ["index.json", "gian.json", "toc.json", "meetings.json"]) writeFileSync(join(root, "dist/online/data", f), JSON.stringify(big[f.replace(".json", "")]));
+if (proceedings) writeFileSync(join(root, "dist/online/data/proceedings.json"), JSON.stringify(proceedings));
 
 console.log("生成: dist/日野町議会-会議録検索.html（オフライン）, dist/online/index.html（fetch型）");

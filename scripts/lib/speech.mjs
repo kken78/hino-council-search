@@ -21,6 +21,30 @@ const clean = (s) => {
   return r.trim();
 };
 
+// 日ごとの会議録テキストは「1行＝1ページ」で、各行の先頭がそのページ番号（定例会「2-57」／臨時会「－13－」）。
+// 汎用の数字パターンで消すと直後の議席番号（2-56＋10番）を巻き込むため、行位置から期待値を作って正確に除去する。
+// 全行が期待どおりのときだけ除去する。改行（＝ページ境界）は残し、発言マーカーが前ページ末尾と連結しないようにする。目次などは無変更。
+export function stripPageHeads(raw) {
+  const lines = raw.split("\n").filter((l) => l.trim());
+  if (!lines.length) return raw;
+  const d = (lines[0].match(/^(\d+)-1(?!\d)/) || [])[1];
+  const DASH = /^[－―‐-]\s*[0-9０-９]+\s*[－―‐-]/;
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (d) {
+      const exp = `${d}-${i + 1}`;
+      if (!l.startsWith(exp)) return raw;
+      out.push(l.slice(exp.length));
+    } else {
+      const m = l.match(DASH);
+      if (!m) return raw;
+      out.push(l.slice(m[0].length));
+    }
+  }
+  return out.join("\n");
+}
+
 // 本文を発言単位へ分割。各要素 {role, name, text}。
 export function splitSpeeches(raw) {
   const marks = [];

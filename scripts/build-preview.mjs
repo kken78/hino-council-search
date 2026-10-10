@@ -14,6 +14,7 @@ const data = {
   dict: { variants: J("dict/variants.json"), synonyms: J("dict/synonyms.json"), yomi: J("dict/yomi.json") },
   highlights: existsSync(join(root, "public/data/highlights.json")) ? J("public/data/highlights.json") : null,
   pages: existsSync(join(root, "public/data/meeting_pages.json")) ? J("public/data/meeting_pages.json") : null,
+  proceedings: existsSync(join(root, "public/data/proceedings.json")) ? J("public/data/proceedings.json") : null,
   local: true,   // preview.html はローカル用：会議ページリンクを非表示にする
 };
 // ローカル preview.html にも norm を付与（初回検索を即応答に）。リポジトリの index.json は変更しない。
