@@ -10,6 +10,7 @@
  * データソース（起動時に取得・ローカルにキャッシュ）：
  *   - council-dashboard  : docs/data/questions.json（議会だより #24〜 の問・答、出典URL付き）
  *   - hino-council-search: public/data/{meetings,index,gian}.json（全会議・発言単位索引）
+ *                          public/data/{proceedings,meeting_pages}.json（審議構造・会議ページ対応。任意：無ければ従来の推定で動く）
  *
  * 使い方（Claude Desktop の claude_desktop_config.json）:
  *   {
@@ -54,7 +55,7 @@ const CACHE_DIR =
   process.env.HINO_MCP_CACHE || path.join(os.homedir(), ".cache", "hino-council-mcp");
 const MAX_AGE_MS = Number(process.env.HINO_MCP_MAX_AGE_HOURS || 24) * 3600 * 1000;
 
-const SERVER_INFO = { name: "hino-council-mcp", version: "0.2.0" };
+const SERVER_INFO = { name: "hino-council-mcp", version: "0.3.0" };
 
 // クライアント（Claude）への利用方針。冒頭のデータ自己申告は起動時に実データから生成する
 // （council-dashboard はフォークで他自治体運用があるため、「日野町」をハードコードしない）。
@@ -66,6 +67,7 @@ const POLICY_LINES = [
   "・議員を質問数などで序列化・採点する出力はしない（データ提供元の編集方針）。",
   "・議会だよりの記事は一問一答が要約で溶け込んでいる。やりとりの深さを見るときは find_minutes_for_bulletin → get_exchange で会議録の実際の応酬を参照する。",
   "・会議録コーパスは公開・取り込みが遅れるため、直近の会議が未収載のことがある（ツールが未収載と返したらその旨を正直に伝える）。",
+  "・議案の審議の経過（提案説明・議案質疑・委員長報告・討論・採決結果）は get_bill_deliberation で取得できる。討論の賛否は討論した議員本人の表明であり、採決での各議員の賛否ではない（会議録に個々の賛否の記録は無い）。",
 ];
 
 const log = (...a) => console.error("[hino-mcp]", ...a);
@@ -96,6 +98,12 @@ async function loadJson(name, url) {
     }
     throw new Error(`${name} を取得できません（${e.message}）。ネットワーク接続を確認してください。`);
   }
+}
+
+/** 任意データ（無くても動く）。取得できずキャッシュも無ければ null */
+async function loadOptional(name, url) {
+  try { return await loadJson(name, url); }
+  catch (e) { log(`任意データ ${name} なし（${e.message}）。従来の推定で動作します。`); return null; }
 }
 
 // ---------------------------------------------------------------- 正規化（NFKC＋空白除去＋異体字）
@@ -155,18 +163,38 @@ let Q = [];    // 質問レコード配列（前処理済み）
 let MEETINGS;  // meetings.json
 let IDX = [];  // index.json（発言。前処理済み）
 let GIAN;      // gian.json
+let PROC = null; // proceedings.json（審議構造・任意）
+let PAGES = null; // meeting_pages.json（会議録ID→案内ページURL・任意）
+let SEGS = new Map(); // 会議ID → 場面の配列（_a/_b は IDX の位置）
 let META = {}; // 集計メタ
 
+const SCENE = { ippan: "一般質問", shitsugi: "議案質疑", report: "委員長報告", debate: "討論", proposal: "提案説明", vote: "採決" };
+const toHalf = (s) => String(s || "").replace(/[０-９]/g, (d) => "０１２３４５６７８９".indexOf(d));
+/** 「議第105号」「議第１０５」「105」などを議案キー「議第105号」へ */
+function normBill(b) {
+  const t = toHalf(String(b || "").replace(/\s/g, ""));
+  const m = t.match(/^(決議案|議案|請願|発議|陳情|議|報|選|諮)?第?(\d+)号?$/);
+  return m ? `${m[1] || "議"}第${m[2]}号` : t;
+}
+
 async function boot() {
-  const [dash, meetings, idx, gian] = await Promise.all([
+  const [dash, meetings, idx, gian, proc, pages] = await Promise.all([
     loadJson("questions.json", DASH_URL),
     loadJson("meetings.json", `${SEARCH_BASE}/meetings.json`),
     loadJson("index.json", `${SEARCH_BASE}/index.json`),
     loadJson("gian.json", `${SEARCH_BASE}/gian.json`),
+    loadOptional("proceedings.json", `${SEARCH_BASE}/proceedings.json`),
+    loadOptional("meeting_pages.json", `${SEARCH_BASE}/meeting_pages.json`),
   ]);
   DASH = dash;
   MEETINGS = meetings;
   GIAN = gian;
+  PROC = proc;
+  PAGES = pages;
+  const meetingIds = new Set(MEETINGS.map((m) => m.id));
+  // 議会だよりの minutes が「本会議のご案内」ページIDの場合（例: 35号）は meeting_pages.json を逆引き
+  const byPage = new Map(Object.entries(PAGES || {}).map(([mid, url]) => [(String(url).match(/(\d{10})/) || [])[1], mid]));
+  const resolveMeeting = (raw) => (raw && !meetingIds.has(raw) && byPage.has(raw) ? byPage.get(raw) : raw);
 
   Q = (dash.questions || []).map((r, i) => {
     const answersText = (r.answers || []).map((a) => `${a.label}:${a.text}`).join("／");
@@ -179,17 +207,34 @@ async function boot() {
       _nMember: norm(r.member),
       _nBlob: normMap(blob),
       _blob: blob,
-      _meetingId: mid ? mid[1] : null,
+      _meetingId: mid ? resolveMeeting(mid[1]) : null,
     };
   });
 
   IDX = idx.map((e, i) => ({ ...e, _i: i, _nName: norm(e.name), _nm: normMap(e.text) }));
 
+  // 審議構造：場面の範囲を IDX の位置に変換し、議長以外の発言に場面（_scene）を付ける
+  if (PROC) {
+    const posOf = new Map(IDX.map((e, i) => [e.sid, i]));
+    for (const [mid, { segments }] of Object.entries(PROC)) {
+      const list = [];
+      for (const sg of segments || []) {
+        if (sg.kind === "vote") { const k = posOf.get(sg.sid); if (k != null) list.push({ ...sg, _a: k, _b: k }); continue; }
+        const a = posOf.get(sg.from), b = posOf.get(sg.to);
+        if (a == null || b == null) continue;
+        const seg = { ...sg, _a: a, _b: b, _nMember: norm(sg.member) };
+        list.push(seg);
+        for (let k = a; k <= b; k++) if (!/議長$/.test(IDX[k].role || "")) IDX[k]._scene = sg.kind;
+      }
+      SEGS.set(mid, list);
+    }
+  }
+
   const themes = [];
   for (const r of Q) if (r.theme && !themes.includes(r.theme)) themes.push(r.theme);
   const members = [];
   for (const r of Q) if (!members.some((m) => m.n === r._nMember)) members.push({ name: r.member, n: r._nMember });
-  META = { themes, members, meetingIds: new Set(MEETINGS.map((m) => m.id)) };
+  META = { themes, members, meetingIds };
 
   // ---- データソースの自己申告と整合性チェック（フォーク混同対策） ----
   const domainOf = (u) => { try { return new URL(u).hostname; } catch { return null; } };
@@ -211,7 +256,7 @@ async function boot() {
   INSTRUCTIONS = [srcLine, ...(warnLine ? [warnLine] : []), ...POLICY_LINES].join("\n");
   if (warnLine) log("警告: データソースの整合性チェックに失敗（別自治体の可能性）。dash=" + dashDomains + " minutes=" + minDomains);
 
-  log(`loaded: 議会だより ${Q.length}件 / 会議 ${MEETINGS.length} / 発言 ${IDX.length} / だより→会議録リンク成立 ${linked}/${withId}`);
+  log(`loaded: 議会だより ${Q.length}件 / 会議 ${MEETINGS.length} / 発言 ${IDX.length} / だより→会議録リンク成立 ${linked}/${withId} / 審議構造 ${PROC ? SEGS.size + "会議" : "なし（推定で動作）"}`);
 }
 
 // ---------------------------------------------------------------- ヘルパー
@@ -251,7 +296,40 @@ function bulletinHit(r) {
  * 間隔が GAP を超えたら別ブロック（別議題）とみなす。ヒューリスティックである旨は出力にも明記。
  */
 const GAP = 12;
+// 場面内の各発言のターン種別（質問・再質問・答弁）。turns は [from の sid 連番からの相対位置, 種別, 問番号]
+function turnKinds(sg) {
+  const m = new Map();
+  if (!sg.turns || !sg.from) return m;
+  const pre = sg.from.slice(0, -4), f0 = parseInt(sg.from.slice(-4), 10);
+  const label = { q: "質問", rq: "再質問", a: "答弁", s: "発言" };
+  for (const [off, t, n] of sg.turns) m.set(pre + String(f0 + off).padStart(4, "0"), { turn: label[t] || t, ...(n ? { question_no: n } : {}) });
+  return m;
+}
 function memberBlocks(meetingId, nMember) {
+  // 審議構造があれば、会議録の議長の進行から切り出した実際の範囲を使う（推定ではない）
+  const segs = (SEGS.get(meetingId) || []).filter((sg) => sg.kind !== "vote" && sg._nMember === nMember);
+  if (segs.length) {
+    return segs.map((sg, i) => {
+      const entries = IDX.slice(sg._a, sg._b + 1);
+      return {
+        block: i,
+        scene: SCENE[sg.kind],
+        date: sg.date,
+        pdf: entries[0].pdf,
+        speeches: entries.length,
+        member_speeches: entries.filter((e) => e._nName === nMember).length,
+        first_sid: sg.from,
+        ...(sg.style ? { style: sg.style } : {}),
+        ...(sg.bills && sg.bills.length ? { bills: sg.bills } : {}),
+        ...(sg.stance ? { stance: sg.stance } : {}),
+        ...(sg.committee ? { committee: sg.committee } : {}),
+        ...(sg.topics && sg.topics.length ? { topics: sg.topics.map(({ n, title, theme, src }) => ({ n, title, theme, src: src === "bulletin" ? "議会だより" : "会議録の答弁から推定" })) } : {}),
+        preview: (entries.find((e) => e._nName === nMember)?.text || "").slice(0, 80),
+        _entries: entries,
+        _seg: sg,
+      };
+    });
+  }
   const inMeeting = IDX.filter((e) => e.meetingId === meetingId);
   const byPdf = new Map();
   for (const e of inMeeting) {
@@ -260,7 +338,7 @@ function memberBlocks(meetingId, nMember) {
   }
   const blocks = [];
   for (const [pdf, list] of byPdf) {
-    const mine = list.map((e, k) => ({ e, k })).filter((x) => x._removed !== true && x.e._nName === nMember);
+    const mine = list.map((e, k) => ({ e, k })).filter((x) => x.e._nName === nMember);
     if (!mine.length) continue;
     let start = mine[0].k, prev = mine[0].k;
     const flush = (endK) => {
@@ -402,9 +480,11 @@ const TOOLS = [
       return {
         bulletin: bulletinHit(r),
         meeting: meetingSummary(m),
-        member_blocks: blocks.map(({ _entries, ...b }) => b),
+        member_blocks: blocks.map(({ _entries, _seg, ...b }) => b),
         note:
-          "block はこの会議での同議員の発言まとまり（日付・連続性による機械推定）。一般質問のほか議案質疑・討論の場合もあるため preview で見当をつけ、get_exchange(meetingId, member, block) で本文を取得してください。" +
+          (blocks[0] && blocks[0].scene
+            ? "block はこの会議での同議員の発言のまとまり（会議録の議長の進行から抽出。scene が一般質問のものが議会だよりに対応）。get_exchange(meetingId, member, block) で本文を取得してください。"
+            : "block はこの会議での同議員の発言まとまり（日付・連続性による機械推定）。一般質問のほか議案質疑・討論の場合もあるため preview で見当をつけ、get_exchange(meetingId, member, block) で本文を取得してください。") +
           NOTE_VERIFY,
       };
     },
@@ -427,7 +507,7 @@ const TOOLS = [
   },
   {
     name: "search_speeches",
-    description: "会議録の発言（29,784件・編集前全文）をキーワード検索する。空白区切りAND、先頭 - はNOT。答弁例を探すときは speaker に '町長' 等の役職名を role に入れるか、氏名を speaker に指定する。",
+    description: "会議録の発言（{SPEECHES}件・編集前全文）をキーワード検索する。空白区切りAND、先頭 - はNOT。答弁例を探すときは speaker に '町長' 等の役職名を role に入れるか、氏名を speaker に指定する。scene で場面（一般質問・議案質疑・委員長報告・討論・提案説明）に絞り込める。",
     inputSchema: {
       type: "object",
       properties: {
@@ -436,12 +516,15 @@ const TOOLS = [
         role: { type: "string", description: "肩書で絞り込み（例: 町長, 教育長, ◯番）" },
         meetingId: { type: "string", description: "会議IDで絞り込み" },
         year: { type: "integer", description: "西暦年で絞り込み" },
+        scene: { type: "string", enum: ["一般質問", "議案質疑", "委員長報告", "討論", "提案説明"], description: "場面で絞り込み（審議構造データがある場合）" },
         limit: { type: "integer", description: "最大件数（既定10）" },
       },
       required: ["query"],
       additionalProperties: false,
     },
-    handler: ({ query, speaker, role, meetingId, year, limit = 10 }) => {
+    handler: ({ query, speaker, role, meetingId, year, scene, limit = 10 }) => {
+      if (scene && !PROC) return { error: "審議構造データ（proceedings.json）が無いため scene では絞り込めません。scene を外して検索してください。" };
+      const sceneKey = scene ? Object.keys(SCENE).find((k) => SCENE[k] === scene) : null;
       const pq = parseQuery(query);
       const nSpeaker = speaker ? norm(speaker) : null;
       const nRole = role ? norm(role) : null;
@@ -451,6 +534,7 @@ const TOOLS = [
         if (year && e.year !== year) continue;
         if (nSpeaker && e._nName !== nSpeaker) continue;
         if (nRole && norm(e.role) !== nRole) continue;
+        if (sceneKey && e._scene !== sceneKey) continue;
         if (!hits(e._nm.n, pq)) continue;
         found.push(e);
       }
@@ -464,6 +548,7 @@ const TOOLS = [
           role: e.role,
           name: e.name,
           agendaRef: e.agendaRef,
+          ...(e._scene ? { scene: SCENE[e._scene] } : {}),
           snippet: snippet(e.text, e._nm, pq.and),
           pdf: e.pdf,
         })),
@@ -532,8 +617,10 @@ const TOOLS = [
         return {
           meeting: meetingSummary(MEETINGS.find((m) => m.id === meetingId)),
           member,
-          member_blocks: blocks.map(({ _entries, ...b }) => b),
-          note: "ブロックが複数あります。block 番号を指定して再取得してください（一般質問は通常、member_speeches が多いブロック）。",
+          member_blocks: blocks.map(({ _entries, _seg, ...b }) => b),
+          note: blocks[0].scene
+            ? "ブロックが複数あります（一般質問・議案質疑・討論など場面ごと）。scene を見て block 番号を指定してください。"
+            : "ブロックが複数あります。block 番号を指定して再取得してください（一般質問は通常、member_speeches が多いブロック）。",
         };
       }
       const b = blocks[block ?? 0];
@@ -541,10 +628,12 @@ const TOOLS = [
       const out = [];
       let used = 0;
       let k = offset;
+      const tk = b._seg ? turnKinds(b._seg) : new Map();
       for (; k < b._entries.length; k++) {
         const e = b._entries[k];
         if (used + e.text.length > max_chars && out.length > 0) break;
-        out.push({ role: e.role, name: e.name, text: e.text });
+        const t = tk.get(e.sid) || (b._seg && /議長$/.test(e.role || "") ? { turn: "議長（進行）" } : {});
+        out.push({ ...t, role: e.role, name: e.name, text: e.text });
         used += e.text.length;
       }
       return {
@@ -552,17 +641,20 @@ const TOOLS = [
         date: b.date,
         pdf: b.pdf,
         block: b.block,
+        ...(b.scene ? { scene: b.scene } : {}),
+        ...(b.style ? { style: b.style } : {}),
+        ...(b.topics ? { topics: b.topics } : {}),
         total_speeches: b._entries.length,
         returned: { from: offset, to: k - 1 },
         truncated: k < b._entries.length ? { next_offset: k } : undefined,
         exchange: out,
-        note: "ブロック区切りは機械推定のヒューリスティックです。" + NOTE_VERIFY,
+        note: (b._seg ? "範囲とターン種別（質問・再質問・答弁）は会議録の議長の進行から機械抽出したものです。" : "ブロック区切りは機械推定のヒューリスティックです。") + NOTE_VERIFY,
       };
     },
   },
   {
     name: "get_meeting_agenda",
-    description: "会議の議案一覧（議案番号・件名・区分）を取得する。件名は目次PDF由来。",
+    description: "会議の議案一覧（議案番号・件名・区分）を取得する。件名は目次PDF由来。審議構造データがあれば採決結果（result）・採決方法（method）・付託委員会（committee）・別会議での採決（decidedIn）も含む。個々の議案の経過は get_bill_deliberation。",
     inputSchema: {
       type: "object",
       properties: { meetingId: { type: "string" } },
@@ -578,6 +670,52 @@ const TOOLS = [
         meeting: m ? meetingSummary(m) : { meetingId },
         agenda: agenda || [],
         note: agenda && agenda.length ? NOTE_VERIFY : "この会議の議案データはありません。",
+      };
+    },
+  },
+  {
+    name: "get_bill_deliberation",
+    description: "議案1件の審議の経過（提案説明・議案質疑・委員長報告・討論・採決結果）を会議録から出典付きで取得する。議案番号は年（会期）ごとに振り直されるため meetingId と組で指定する（get_meeting_agenda で確認）。",
+    inputSchema: {
+      type: "object",
+      properties: {
+        meetingId: { type: "string" },
+        bill: { type: "string", description: "議案番号（例: '議第105号'、'請願第8号'、'決議案第2号'）" },
+        max_chars: { type: "integer", description: "各発言の抜粋の最大文字数（既定600）" },
+      },
+      required: ["meetingId", "bill"],
+      additionalProperties: false,
+    },
+    handler: ({ meetingId, bill, max_chars = 600 }) => {
+      if (!PROC) return { error: "審議構造データ（proceedings.json）が取得できないため利用できません。get_meeting_agenda と search_speeches を使ってください。" };
+      if (!META.meetingIds.has(meetingId)) return { error: `会議ID '${meetingId}' はコーパスに未収載です。list_meetings で確認してください。` };
+      const no = normBill(bill);
+      const g = GIAN && GIAN[meetingId];
+      const item = ((g && g.agenda) || []).find((a) => a.no === no);
+      // 9月付託→12月採決の決算など、別会議で報告・採決されたものも含める
+      const ids = [meetingId, ...(item && item.decidedIn && item.decidedIn !== meetingId ? [item.decidedIn] : [])];
+      const excerpt = (e) => (e.text.length > max_chars ? e.text.slice(0, max_chars) + "…" : e.text);
+      const steps = { 提案説明: [], 議案質疑: [], 委員長報告: [], 討論: [], 採決: [] };
+      for (const id of ids) {
+        const mName = (MEETINGS.find((m) => m.id === id) || {}).name;
+        for (const sg of SEGS.get(id) || []) {
+          if (!(sg.bills || []).includes(no) || !SCENE[sg.kind]) continue;
+          if (id !== meetingId && !["report", "debate", "vote"].includes(sg.kind)) continue;
+          const first = IDX[sg._a];
+          const own = IDX.slice(sg._a, sg._b + 1).filter((e) => !/議長$/.test(e.role || ""));
+          const base = { meeting: mName, date: sg.date, pdf: first.pdf, sid: sg.kind === "vote" ? sg.sid : sg.from };
+          if (sg.kind === "vote") steps.採決.push({ ...base, result: sg.result, method: sg.method || undefined, basis: sg.basis || undefined, excerpt: excerpt(first), also_voted_together: sg.bills.length > 1 ? sg.bills.filter((b) => b !== no) : undefined });
+          else if (sg.kind === "shitsugi") steps.議案質疑.push({ ...base, member: sg.member, seat: sg.seat || undefined, speeches: own.length, first_question: own[0] ? excerpt(own[0]) : undefined, note: "1回の質疑で複数議案に触れることが多い。全文は get_exchange(meetingId, member)。" });
+          else steps[SCENE[sg.kind]].push({ ...base, member: sg.member, role: sg.role || sg.seat || undefined, committee: sg.committee || undefined, stance: sg.stance || undefined, excerpt: own[0] ? excerpt(own[0]) : undefined });
+        }
+      }
+      const any = Object.values(steps).some((x) => x.length);
+      return {
+        meeting: meetingSummary(MEETINGS.find((m) => m.id === meetingId)),
+        bill: item || { no },
+        steps,
+        note: (any ? "" : "この議案の審議の記録は会議録から抽出できませんでした（報告案件は採決を行いません）。") +
+          "討論の stance は討論者本人の表明（反対／賛成）で、採決での各議員の賛否ではありません。" + NOTE_VERIFY,
       };
     },
   },
@@ -610,7 +748,7 @@ function handle(msg) {
   if (method === "ping") return reply(id, {});
   if (method === "tools/list") {
     return reply(id, {
-      tools: TOOLS.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),
+      tools: TOOLS.map(({ name, description, inputSchema }) => ({ name, description: description.replace("{SPEECHES}", IDX.length.toLocaleString("en-US")), inputSchema })),
     });
   }
   if (method === "tools/call") {

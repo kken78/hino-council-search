@@ -15,6 +15,7 @@ Claude など MCP (Model Context Protocol) 対応クライアントから、日�
 - 数値・固有名詞は機械抽出の誤りがありうるため「原本PDF・公式ページで要確認」と明示する
 - 質問数などで議員を序列化する出力はしない（council-dashboard の `docs/EDITORIAL_POLICY.md` と同方針）
 - 会議録コーパスは公開・取り込みが遅れるため、直近会議が未収載のことがある（未収載はその旨を正直に返す）
+- 討論の賛否は討論した議員本人の表明であり、採決での各議員の賛否ではない（会議録に個々の賛否の記録は無い）
 
 ## 必要環境
 
@@ -53,6 +54,10 @@ Claude Desktop の場合は `claude_desktop_config.json` に追加：
 |---|---|
 | 一般質問（議会だより #24〜） | council-dashboard `docs/data/questions.json` |
 | 会議一覧・発言索引・議案 | hino-council-search `public/data/{meetings,index,gian}.json` |
+| 審議構造・会議ページ対応（任意） | hino-council-search `public/data/{proceedings,meeting_pages}.json` |
+
+`proceedings.json` は会議録の議長の進行から切り出した場面（一般質問・議案質疑・委員長報告・討論・提案説明・採決結果）。
+取得できない場合（古いデータ・フォーク先など）は警告だけ出し、従来どおりの推定で動く。
 
 各リポジトリのデータが更新されれば、サーバー自体を更新しなくても
 （キャッシュ期限後の再起動で）自動的に追従する。
@@ -66,20 +71,24 @@ Claude Desktop の場合は `claude_desktop_config.json` に追加：
 | `get_bulletin_question` | 一般質問1件の全文と出典URL |
 | `find_minutes_for_bulletin` | 議会だよりの記事 → 対応する会議録ブロックへの入口 |
 | `list_meetings` | 収載済み会議の一覧 |
-| `search_speeches` | 会議録の発言全文を検索（発言者・役職・年で絞り込み可） |
+| `search_speeches` | 会議録の発言全文を検索（発言者・役職・年・場面で絞り込み可。結果に場面を表示） |
 | `get_speech` | 発言1件＋前後の文脈 |
-| `get_exchange` | ある会議での議員の質疑応酬をまとめて取得（長文はページング） |
-| `get_meeting_agenda` | 会議の議案一覧（目次PDF由来） |
+| `get_exchange` | ある会議での議員の質疑応酬をまとめて取得（長文はページング）。各発言に質問／再質問／答弁の種別 |
+| `get_meeting_agenda` | 会議の議案一覧（目次PDF由来）。採決結果・付託委員会も含む |
+| `get_bill_deliberation` | 議案1件の審議の経過（提案説明・議案質疑・委員長報告・討論・採決）を出典付きで |
 
 議会だより→会議録のひも付けは、ダッシュボード側 `minutes` URL の数値IDが
-会議録側の `meetingId` と一致することを利用している。
+会議録側の `meetingId` と一致することを利用している。`minutes` が「本会議のご案内」ページの
+IDになっている号（例：35号）は、`meeting_pages.json` を逆引きして会議録IDに直す。
 
 ## 既知の限界
 
-- `get_exchange` のブロック区切りは機械推定（同一日のPDF内で、本人発言の間隔が
-  12発言を超えたら分割）。議案質疑・討論も別ブロックとして出るため、
-  `preview` で内容の見当をつけてから取得する。
-- 1ブロックには複数の質問項目が含まれることがある（分割質問方式）。項目単位の分割はしない。
+- `get_exchange` のブロックは、`proceedings.json` があれば会議録の議長の進行から切り出した
+  実際の範囲（`scene` に一般質問／議案質疑／討論…を表示）。無い場合は従来の機械推定
+  （同一日のPDF内で、本人発言の間隔が12発言を超えたら分割）。
+- 質問／再質問の区別、質問項目（答弁冒頭から推定）、討論の賛否・対象議案は機械抽出で、
+  誤りがありうる。精度はリポジトリの `scripts/check-proceedings.mjs` で確認できる。
+- 議案番号は年（会期）ごとに振り直されるため、`get_bill_deliberation` は会議IDと組で指定する。
 - 検索・区切りはすべて機械処理。正確な内容は必ず原本PDFで確認すること。
 
 ## 環境変数（すべて任意）
