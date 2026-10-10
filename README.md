@@ -352,7 +352,7 @@ gikai-search/
 
 ## 5. ビルドパイプライン
 
-> Node.js 20+ / ESM。`npm i pdfjs-dist cheerio @anthropic-ai/sdk @xenova/transformers`
+> Node.js 22.13+（PDF抽出の pdfjs-dist 6 の要件。ビルド・テストは 18+ でも可）/ ESM。`npm i pdfjs-dist cheerio @anthropic-ai/sdk @xenova/transformers`
 
 ### 5.1 lib/normalize.mjs（正規化）
 NFKC＋異体字＋空白除去＋小文字化。ハイライト用の対応表つき `buildNorm`（norm＋map）、照合専用の軽量 `buildNormStr`（norm文字列のみ）、クエリ用 `normTerm` を提供。フロント側の正規化と**完全に同一のルール**であることが必須（ズレると検索がヒットしなくなる）。

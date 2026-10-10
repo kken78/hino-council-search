@@ -5,6 +5,9 @@
   "type": "module",
   "description": "日野町議会 議事録横断検索システム（発言単位の全文検索・ノービルドの静的サイト／単一HTML配布）",
   "license": "MIT",
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "crawl": "node scripts/crawl.mjs",
     "extract": "node scripts/extract.mjs",
@@ -23,7 +26,7 @@
   },
   "devDependencies": {
     "cheerio": "^1.0.0",
-    "pdfjs-dist": "^4.6.82"
+    "pdfjs-dist": "^6.4.299"
   },
   "optionalDependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
