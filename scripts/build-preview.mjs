@@ -3,12 +3,13 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { buildNormStr } from "./lib/normalize.mjs";
+import { readIndex } from "./lib/data.mjs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const R = (p) => readFileSync(join(root, p), "utf8");
 const J = (p) => JSON.parse(R(p));
 const data = {
-  meetings: J("public/data/meetings.json"), index: J("public/data/index.json"),
+  meetings: J("public/data/meetings.json"), index: readIndex(join(root, "public/data")),
   gian: J("public/data/gian.json"), toc: J("public/data/toc.json"),
   topics: J("dict/topics.json"),
   dict: { variants: J("dict/variants.json"), synonyms: J("dict/synonyms.json"), yomi: J("dict/yomi.json") },
@@ -17,7 +18,7 @@ const data = {
   proceedings: existsSync(join(root, "public/data/proceedings.json")) ? J("public/data/proceedings.json") : null,
   local: true,   // preview.html はローカル用：会議ページリンクを非表示にする
 };
-// ローカル preview.html にも norm を付与（初回検索を即応答に）。リポジトリの index.json は変更しない。
+// ローカル preview.html にも norm を付与（初回検索を即応答に）。リポジトリの発言索引は変更しない。
 for (const e of data.index) if (e.norm == null) e.norm = buildNormStr(e.text || "");
 
 // ローカル閲覧用：PDFリンクを手元フォルダ（議事録本体/<会議ID>_<ファイル名>）に向ける。

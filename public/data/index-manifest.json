@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "generated": "2026-10-10",
+  "total": 31263,
+  "shards": [
+    {
+      "year": 2026,
+      "file": "index/2026.json",
+      "count": 1192
+    },
+    {
+      "year": 2025,
+      "file": "index/2025.json",
+      "count": 3439
+    },
+    {
+      "year": 2024,
+      "file": "index/2024.json",
+      "count": 2785
+    },
+    {
+      "year": 2023,
+      "file": "index/2023.json",
+      "count": 3170
+    },
+    {
+      "year": 2022,
+      "file": "index/2022.json",
+      "count": 3355
+    },
+    {
+      "year": 2021,
+      "file": "index/2021.json",
+      "count": 3834
+    },
+    {
+      "year": 2020,
+      "file": "index/2020.json",
+      "count": 3762
+    },
+    {
+      "year": 2019,
+      "file": "index/2019.json",
+      "count": 3439
+    },
+    {
+      "year": 2018,
+      "file": "index/2018.json",
+      "count": 3359
+    },
+    {
+      "year": 2017,
+      "file": "index/2017.json",
+      "count": 2928
+    }
+  ]
+}

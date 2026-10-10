@@ -1,8 +1,9 @@
-// enrich.mjs（任意）— Claude で会議要約・トピック・議案区分を付与し index.json/gian.json を更新。
+// enrich.mjs（任意）— Claude で会議要約・トピック・議案区分を付与し発言索引/gian.json を更新。
 // ANTHROPIC_API_KEY が無い場合は何もせず終了（キーワード検索はAI無しで動作）。
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { readIndex, writeIndex } from "./lib/data.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dirname, "../public/data");
@@ -36,7 +37,7 @@ ${corpus}`,
 async function run() {
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const ac = new Anthropic();
-  const index = JSON.parse(readFileSync(join(DATA, "index.json"), "utf8"));
+  const index = readIndex(DATA);
   const gianAll = JSON.parse(readFileSync(join(DATA, "gian.json"), "utf8"));
 
   // 会議ID→発言
@@ -69,7 +70,7 @@ async function run() {
       if (s.topics && !e.topics) e.topics = s.topics;
     }
   }
-  writeFileSync(join(DATA, "index.json"), JSON.stringify(index));
+  writeIndex(DATA, index);
   writeFileSync(join(DATA, "gian.json"), JSON.stringify(gianAll, null, 2));
   writeFileSync(join(DATA, "summaries.json"), JSON.stringify(summaries, null, 2));
   console.log("enrich 完了。");

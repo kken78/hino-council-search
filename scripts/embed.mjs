@@ -3,6 +3,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { readIndex } from "./lib/data.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dirname, "../public/data");
@@ -35,7 +36,7 @@ async function run() {
     console.log("embed: @xenova/transformers 未インストールのためスキップ（任意機能）。");
     return;
   }
-  const index = JSON.parse(readFileSync(join(DATA, "index.json"), "utf8"));
+  const index = readIndex(DATA);
   const ids = [], texts = [];
   for (const e of index) {
     ids.push(e.sid);

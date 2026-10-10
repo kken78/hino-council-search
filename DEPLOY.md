@@ -14,7 +14,7 @@ npm install   # cheerio / pdfjs のみ（フロントにビルド工程はあり
 ```bash
 npm run crawl     # 全会議を巡回 → public/data/meetings.json, toc.json
 npm run extract   # 各PDFをDL & pdfjsでテキスト化 → data/text/（キャッシュ）
-npm run index     # 発言分割・正規化・議案抽出 → public/data/index.json, gian.json
+npm run index     # 発言分割・正規化・議案抽出 → public/data/index/<年>.json（＋index-manifest.json）, gian.json, proceedings.json
 ```
 - 目安：全64会議・PDF約250本程度。`extract` は取得済みPDFをスキップするので再実行は速いです。
 - サイト負荷に配慮し各取得間に小休止。失敗PDFは `NG` 表示、再実行で続きから取得できます。

@@ -12,6 +12,7 @@
     "link-bulletin": "node scripts/link-bulletin.mjs",
     "check": "node scripts/check-proceedings.mjs",
     "highlights": "node scripts/highlights.mjs",
+    "test": "node --test scripts/test/",
     "split": "node scripts/index.mjs",
     "enrich": "node scripts/enrich.mjs",
     "embed": "node scripts/embed.mjs",

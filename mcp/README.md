@@ -43,7 +43,12 @@ Claude Desktop の場合は `claude_desktop_config.json` に追加：
 }
 ```
 
-初回起動時はデータ取得（index.json 約45MB を含む）のため十数秒かかる。
+初回起動時はデータ取得（発言索引 約46MB を含む）のため十数秒かかる。
+
+> **v0.4.0 以降が必要です（2026-10〜）**：会議録データの発言索引を、1ファイル（`index.json`）から年別ファイル
+> （`index-manifest.json`＋`index/<年>.json`）に分割しました。v0.3.0 以前のサーバーは新しいデータを取得できず、
+> 手元のキャッシュ（最後に取得した時点のデータ）で動き続けます。このリポジトリの最新の `mcp/hino-council-mcp.mjs` に
+> 置き換えてください。v0.4.0 は分割前の `index.json` しか無いデータ（フォーク先など）も読めます。
 以後はキャッシュにより数秒で起動する。
 
 ## データソースと更新
@@ -53,7 +58,8 @@ Claude Desktop の場合は `claude_desktop_config.json` に追加：
 | データ | 取得元 |
 |---|---|
 | 一般質問（議会だより #24〜） | council-dashboard `docs/data/questions.json` |
-| 会議一覧・発言索引・議案 | hino-council-search `public/data/{meetings,index,gian}.json` |
+| 会議一覧・議案 | hino-council-search `public/data/{meetings,gian}.json` |
+| 発言索引 | hino-council-search `public/data/index-manifest.json`＋`index/<年>.json`（無ければ `index.json`） |
 | 審議構造・会議ページ対応（任意） | hino-council-search `public/data/{proceedings,meeting_pages}.json` |
 
 `proceedings.json` は会議録の議長の進行から切り出した場面（一般質問・議案質疑・委員長報告・討論・提案説明・採決結果）。

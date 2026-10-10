@@ -142,7 +142,7 @@
 ```
 gikai-search/
 ├─ README.md / DEV_NOTES.md                # 仕様 / 実装・運用メモ
-├─ package.json / vite.config.js / index.html / LICENSE / .gitignore
+├─ package.json / LICENSE / .gitignore
 ├─ .github/workflows/build-deploy.yml      # push時ビルド＆Pagesデプロイ（build.mjs のみ）
 ├─ scripts/                                # ビルドパイプライン（Node ESM）
 │  ├─ crawl.mjs          # 巡回 → meetings.json ＋ toc.json
@@ -150,7 +150,8 @@ gikai-search/
 │  ├─ extract.mjs        # PDF → テキスト（pdfjs, data/text にキャッシュ）
 │  ├─ index.mjs          # 発言分割・議案抽出・審議構造 → index/gian/proceedings、toc更新
 │  ├─ link-bulletin.mjs  # 議会だより(council-dashboard)の一般質問見出しを proceedings/gian へ結びつけ
-│  ├─ check-proceedings.mjs # 審議構造の精度レポート
+│  ├─ check-proceedings.mjs # 審議構造の精度レポート（＋公開データのファイルサイズ）
+│  ├─ test/              # 解析器の回帰テスト（npm test）
 │  ├─ enrich.mjs         # 任意（Claude：要約・分類）
 │  ├─ embed.mjs          # 任意（埋め込み）
 │  ├─ highlights.mjs     # 注目テーマ生成 → highlights.json（AI/フォールバック）
@@ -163,6 +164,7 @@ gikai-search/
 │     ├─ eras.mjs        # 元号⇔西暦・漢数字
 │     ├─ speech.mjs      # 発言分割・議案抽出・区分推定・ページ番号除去
 │     ├─ proceedings.mjs # 審議構造（一般質問・質疑・委員長報告・討論・採決）の解析
+│     ├─ data.mjs        # 発言索引の読み書き（年別ファイル＋目録。分割前の index.json も読める）
 │     ├─ keys.mjs        # テキストキャッシュのキー生成
 │     └─ fetchx.mjs      # 取得層（native fetch+cheerio / offlineキャッシュ）
 ├─ dict/                                   # 辞書（手で育てる）
@@ -175,7 +177,8 @@ gikai-search/
 ├─ public/data/                            # 公開する索引（フロントが読む・コミット対象）
 │  ├─ meetings.json      # 全文索引対象の会議
 │  ├─ toc.json           # 年度別カタログ（全会議の目次）
-│  ├─ index.json         # 発言単位の検索本体（リポジトリ版は norm 無しで軽量）
+│  ├─ index-manifest.json # 発言索引の目録（年別ファイルの一覧・件数）
+│  ├─ index/<年>.json    # 発言単位の検索本体を年ごとに分割（リポジトリ版は norm 無しで軽量）
 │  ├─ gian.json          # 議案メタ・一般質問者
 │  ├─ highlights.json    # 注目テーマ（議会で議論になっているテーマ）
 │  ├─ meeting_pages.json # 会議録ID → 「本会議のご案内」ページURL の対応表
@@ -186,7 +189,6 @@ gikai-search/
 ├─ dist/                                    # ビルド成果物（build.mjs が生成・.gitignore）
 │  ├─ 日野町議会-会議録検索.html            # オフライン配布用（データ埋め込み単一HTML）
 │  └─ online/ (index.html + data/)          # GitHub Pages 配信用（fetch型）
-└─ src/                                     # ［レガシー］旧React版（参考・製品では未使用）
 ```
 
 ---
@@ -210,7 +212,14 @@ gikai-search/
 ]
 ```
 
-### index.json（発言単位／検索本体）
+### index/<年>.json ＋ index-manifest.json（発言単位／検索本体）
+> 2026-10 に1ファイル（index.json・約46MB）から年別ファイルへ分割した（GitHub の 50MB 警告を避け、更新時の差分を小さくするため）。
+> 各年のファイルは下の要素の配列で、`index-manifest.json` の `shards` の順（新しい年から）に連結すると分割前の index.json と同じ並びになる。
+> 読み書きは `scripts/lib/data.mjs` の `readIndex` / `writeIndex`（分割前の index.json しか無いデータも読める）。
+```json
+{ "schema": 1, "generated": "2026-10-10", "total": 31263,
+  "shards": [ { "year": 2026, "file": "index/2026.json", "count": 1192 }, { "year": 2025, "file": "index/2025.json", "count": 3439 } ] }
+```
 ```json
 [
   {
@@ -541,7 +550,7 @@ npm install
 # 1) データ生成（巡回→抽出→分割→索引）
 npm run crawl       # public/data/meetings.json
 npm run extract     # data/text/*.txt（PDFキャッシュ）
-npm run index       # public/data/index.json, gian.json
+npm run index       # public/data/index/<年>.json＋index-manifest.json, gian.json, proceedings.json
 
 # 2) 任意：注目テーマ・AI付与・埋め込み・会議ページ対応表
 node scripts/highlights.mjs        # public/data/highlights.json（要 ANTHROPIC_API_KEY／無ければフォールバック）
