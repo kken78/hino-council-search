@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { buildNormStr } from "./lib/normalize.mjs";
 import { readIndex } from "./lib/data.mjs";
+import { applySite } from "./lib/site.mjs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const R = (p) => readFileSync(join(root, p), "utf8");
@@ -33,7 +34,7 @@ if (!process.env.HINO_PDF_ONLINE) {
   for (const m of data.meetings) for (const p of (m.pdfs || [])) if (p.url) p.url = local(m.id, p.url);
 }
 
-let tpl = R("scripts/preview.tpl.html");
+let tpl = applySite(R("scripts/preview.tpl.html"));
 // ローカル専用：フッター等に直書きされた外部リンク（議会だよりダッシュボード等）を除去。
 // preview.html は完全ローカル用のため、インターネット向けURLのリンクを持たせない。
 // （PDF/会議ページのリンクは上で既にローカル化／非表示にしている）

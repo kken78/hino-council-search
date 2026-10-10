@@ -5,11 +5,12 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { SITE } from "./lib/site.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
-const INDEX = "https://www.town.shiga-hino.lg.jp/category/32-3-5-0-0-0-0-0-0-0.html";
-const ORIGIN = "https://www.town.shiga-hino.lg.jp";
+const INDEX = SITE.site.meeting_guide_index; // 「本会議のご案内」の一覧（site.config.json。無ければ作らない）
+const ORIGIN = SITE.site.root;
 
 // 名称から 西暦年 / 種別 / 月 を取り出す（会議録・案内で共通ロジック）
 const eraYear = (name) => {
@@ -24,6 +25,7 @@ const monthOf = (name) => { const m = name.match(/[（(](\d+)月/) || name.match
 const key = (y, t, mo) => `${y}|${t}|${mo}`;
 
 async function run() {
+  if (!INDEX) { console.log("site.config.json に site.meeting_guide_index が無いため、会議ページ対応表は作りません。"); return; }
   const html = await (await fetch(INDEX)).text();
   // <a href=".../0000XXXXXX.html">名称</a> を収集（定例会・臨時会の案内のみ）
   const re = /href="([^"]*\/(\d{10})\.html)"[^>]*>([^<]*(?:定例|臨時)[^<]*)<\/a>/g;

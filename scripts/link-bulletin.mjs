@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { buildNormStr } from "./lib/normalize.mjs";
 import { readIndex } from "./lib/data.mjs";
+import { SITE } from "./lib/site.mjs";
 
 // ── 議会だよりの質問 → 会議録の議員発言の位置合わせ ──
 // 文字の2-gramで「質問の題名＋問の本文の冒頭」が発言の冒頭600字にどれだけ現れるか（被覆率）を測り、
@@ -47,7 +48,7 @@ function alignQuestions(seg, qs, textOf) {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dirname, "../public/data");
-const SRC = process.env.BULLETIN_QUESTIONS_URL || "https://raw.githubusercontent.com/kken78/council-dashboard/main/docs/data/questions.json";
+const SRC = process.env.BULLETIN_QUESTIONS_URL || (SITE.bulletin && SITE.bulletin.questions_url) || null;
 const J = (f) => JSON.parse(readFileSync(join(DATA, f), "utf8"));
 
 async function load() {
@@ -58,6 +59,7 @@ async function load() {
 }
 
 async function run() {
+  if (!SRC) { console.log("site.config.json に bulletin.questions_url が無いため、議会だよりとの結びつけは行いません。"); return; }
   let dash;
   try { dash = await load(); }
   catch (e) { console.warn(`議会だよりの取得に失敗したため結びつけを省略します（${SRC}: ${e.message}）`); return; }

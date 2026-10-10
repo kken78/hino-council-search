@@ -1,5 +1,5 @@
 // build.mjs — 本番フロントを生成。
-//   dist/日野町議会-会議録検索.html … データ埋め込みの自己完結HTML（オフライン配布・閉域NW用）
+//   dist/<site.config.json の ui.offline_file> … データ埋め込みの自己完結HTML（オフライン配布・閉域NW用）
 //   dist/online/index.html (+ data/*.json) … fetch型の軽量版（GitHub Pages 配信用）
 // 環境変数 HINO_BUNDLE_PDF=1 で data/pdf を dist に同梱し、PDFリンクを相対パス化（完全オフライン用）。
 import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from "node:fs";
@@ -8,6 +8,7 @@ import { dirname, join } from "node:path";
 import { textKey } from "./lib/keys.mjs";
 import { buildNormStr } from "./lib/normalize.mjs";
 import { readIndex, writeIndex } from "./lib/data.mjs";
+import { SITE, applySite } from "./lib/site.mjs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const R = (p) => readFileSync(join(root, p), "utf8");
@@ -45,14 +46,15 @@ if (process.env.HINO_BUNDLE_PDF) {
 // 実行時の正規化ゼロ＝初回検索を即応答に。フロントは e.norm があればそれを使う。
 for (const e of big.index) if (e.norm == null) e.norm = buildNormStr(e.text || "");
 
-let tpl = R("scripts/preview.tpl.html");
+let tpl = applySite(R("scripts/preview.tpl.html"));
+const TITLE = applySite("{{TITLE}}"), OFFLINE = (SITE.ui && SITE.ui.offline_file) || "会議録検索.html";
 tpl = tpl.replace(/<div class="note">[\s\S]*?<\/div>\n/, "")
          .replace(/ <span style="font-size:12px;color:#9fb0c6">（プレビュー）<\/span>/, "")
-         .replace("<title>日野町議会 会議録 横断検索（プレビュー）</title>", "<title>日野町議会 会議録 横断検索</title>");
+         .replace(`<title>${TITLE}（プレビュー）</title>`, `<title>${TITLE}</title>`);
 
 // 1) オフライン配布用：全データ埋め込み
 const allData = { ...big, ...small, proceedings };
-writeFileSync(join(root, "dist/日野町議会-会議録検索.html"), tpl.replace("/*__BOOT__*/", "start(" + JSON.stringify(allData) + ");"));
+writeFileSync(join(root, "dist", OFFLINE), tpl.replace("/*__BOOT__*/", "start(" + JSON.stringify(allData) + ");"));
 
 // 2) オンライン用：dict/topics内蔵＋大きいJSONはfetch（発言索引は年別ファイルを並列取得）
 const boot = "const DICT=" + JSON.stringify(small.dict) + ";const TOPICS=" + JSON.stringify(small.topics) + ";const HL=" + JSON.stringify(small.highlights) + ";const PAGES=" + JSON.stringify(small.pages) + ";"
@@ -73,4 +75,4 @@ writeIndex(join(root, "dist/online/data"), big.index);
 for (const f of ["gian.json", "toc.json", "meetings.json"]) writeFileSync(join(root, "dist/online/data", f), JSON.stringify(big[f.replace(".json", "")]));
 if (proceedings) writeFileSync(join(root, "dist/online/data/proceedings.json"), JSON.stringify(proceedings));
 
-console.log("生成: dist/日野町議会-会議録検索.html（オフライン）, dist/online/index.html（fetch型）");
+console.log(`生成: dist/${OFFLINE}（オフライン）, dist/online/index.html（fetch型）`);

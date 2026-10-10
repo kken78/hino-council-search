@@ -1,7 +1,10 @@
 // 発言分割（発言者＋発言）と、議事日程からの議案抽出。
 
 // 発言マーカー：「役職／番号（氏名君）」。全角括弧。役職に空白・記号は含めない。
-const SPK = /([^\s　\n、。「」（）]{1,16})（([^（）\n]{1,14})君）/g;
+// 敬称（日野町は「君」）は site.config.json の speech.honorific で変えられる（例：「議員」「さん」）。
+import { SITE } from "./site.mjs";
+const HON = ((SITE.speech && SITE.speech.honorific) ?? "君").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const SPK = new RegExp(`([^\\s　\\n、。「」（）]{1,16})（([^（）\\n]{1,14})${HON}）`, "g");
 
 const clean = (s) => {
   let r = s.replace(/[\s　]/g, "").trim();
