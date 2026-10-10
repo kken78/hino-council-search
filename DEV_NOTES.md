@@ -21,7 +21,7 @@ npm run crawl     # 日野町HPを巡回 → public/data/meetings.json（全会�
 npm run extract   # 各PDFをDL & pdfjsでテキスト化 → data/text/（キャッシュ）
 npm run index     # 発言分割・正規化・議案抽出 → public/data/index/<年>.json（＋index-manifest.json）, gian.json, proceedings.json
 npm run enrich    # 任意（ANTHROPIC_API_KEY）
-npm run embed     # 任意（@xenova/transformers）
+npm run embed     # 任意。先に npm i --no-save @xenova/transformers（既定の依存には含めない）
 npm run preview   # 確認用 preview.html を生成（ブラウザで開く）
 ```
 全会議へ広げるには環境変数を付けずに `npm run crawl` を実行（フィルタ無し）。
