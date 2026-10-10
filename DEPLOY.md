@@ -47,6 +47,7 @@ HINO_BUNDLE_PDF=1 npm run build
    | `build-deploy.yml` | main への push | コミット済みの索引（`public/data/`）から `build.mjs` でビルドし、`dist/online` を Pages に公開（巡回はしない） |
    | `update-data.yml` | 毎週月曜 6:00 JST（手動実行も可） | 会議録一覧を巡回し、新しい会議・PDFがあれば `extract → index → link-bulletin → highlights → crawl-pages` を実行して、精度レポート付きの PR（`data/auto-update` ブランチ）を作る。既に開いていれば更新 |
    | `ci.yml` | PR・main への push | `npm test`・精度レポート・MCPの構文チェック・本番ビルド |
+   | `keepalive.yml` | 毎月1日 9:00 JST | 60日無活動での定期実行の自動停止を防ぐ（定期実行の再有効化、45日以上コミットが無ければ `keepalive` ブランチに空コミット） |
    - `update-data.yml` が PR を作るには、Settings → Actions → General → Workflow permissions の
      「**Allow GitHub Actions to create and approve pull requests**」をオンにする。
    - 自動PRは人が確認してからマージする（マージで `build-deploy` が公開を更新）。GITHUB_TOKEN で作った PR では `ci` が自動実行されないため、PR 本文に精度レポートを載せている。

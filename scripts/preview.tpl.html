@@ -83,6 +83,7 @@ dialog.thread::backdrop{background:rgba(20,28,40,.55)}
 .turn .tbody-text{font-size:14px;white-space:pre-wrap;margin-top:4px;color:#26303f}
 .turn .tfoot{margin-top:5px;font-size:12px}
 .thread.hide-chair .t-chair{display:none}
+.qmark{font-size:12px;font-weight:700;color:#2e6b46;background:#eafaf0;border-left:4px solid #2e6b46;border-radius:4px;padding:3px 10px;margin:12px 0 6px}
 .turn .tfull{display:none}.turn.open .tfull,.thread.show-full .tfull{display:inline}.turn.open .tshort,.thread.show-full .tshort{display:none}.thread.show-full .tmore{display:none}.tmore{font-size:12px;margin-top:3px}
 @media(max-width:560px){dialog.thread{width:100vw;max-width:100vw;max-height:100vh;height:100vh;border-radius:0}.turn.t-a{margin-left:12px}}
 /* 議案審議：結果タグ・審議の経過・場面リスト */
@@ -221,7 +222,15 @@ mapSegments();if(proceedings)$("#fSceneWrap").hidden=false;
 const sceneOf=e=>e._seg?e._seg.kind:"other";
 const sceneLabel=sg=>sg.kind==="debate"&&sg.stance?sg.stance+"討論":sg.kind==="report"&&sg.committee?"委員長報告（"+sg.committee.replace(/委員会$/,"")+"）":SCENE[sg.kind];
 // 場面内の各発言のラベル（質問／再質問／再々質問／答弁）
-function turnLabels(sg){const m=new Map();if(!sg.turns)return m;const pre=sg.from.slice(0,-4),f0=parseInt(sg.from.slice(-4),10);const multi=sg.turns.some(x=>x[1]==="q"&&x[2]>1);const rq={};for(const [off,t,n] of sg.turns){const sid=pre+String(f0+off).padStart(4,"0");let label="";if(t==="q")label=multi?"質問（第"+n+"問）":"質問";else if(t==="rq"){rq[n]=(rq[n]||0)+1;const k=rq[n];label=(k===1?"再質問":k===2?"再々質問":"再質問（"+k+"回目）")+(multi?"・第"+n+"問":"");}else if(t==="a")label="答弁";m.set(sid,{t,label});}return m;}
+function turnLabels(sg){const m=new Map();if(!sg.turns)return m;const pre=sg.from.slice(0,-4),f0=parseInt(sg.from.slice(-4),10);const sidOf=off=>pre+String(f0+off).padStart(4,"0");
+  // 議会だよりの全質問の位置が分かっている一般質問は、その番号で「質問／再質問」を付け直す（会議録だけの判定より正確）
+  const bq=(sg.topics||[]).filter(x=>x.src==="bulletin");
+  if(sg.qalign&&bq.length&&sg.qalign.length===bq.length){const at=new Map();for(const [n,off] of sg.qalign)(at.get(off)||at.set(off,[]).get(off)).push(n);let cur=null,k=0;
+    for(const [off,t] of sg.turns){if(t==="a"){m.set(sidOf(off),{t,label:"答弁"});continue;}if(t!=="q"&&t!=="rq")continue;
+      if(at.has(off)){cur=at.get(off);k=0;m.set(sidOf(off),{t:"q",label:"質問（第"+cur.join("・")+"問）"});}
+      else{k++;m.set(sidOf(off),{t:"rq",label:(k===1?"再質問":k===2?"再々質問":"再質問（"+k+"回目）")+(cur?"・第"+cur.join("・")+"問":"")});}}
+    return m;}
+  const multi=sg.turns.some(x=>x[1]==="q"&&x[2]>1);const rq={};for(const [off,t,n] of sg.turns){const sid=sidOf(off);let label="";if(t==="q")label=multi?"質問（第"+n+"問）":"質問";else if(t==="rq"){rq[n]=(rq[n]||0)+1;const k=rq[n];label=(k===1?"再質問":k===2?"再々質問":"再質問（"+k+"回目）")+(multi?"・第"+n+"問":"");}else if(t==="a")label="答弁";m.set(sid,{t,label});}return m;}
 {const _a=$("#tocN"),_b=$("#ixN");if(_a)_a.textContent=toc.length;if(_b)_b.textContent=toc.filter(t=>t.indexed).length;}
 // 会議セレクト（索引済み）
 for(const t of toc.filter(x=>x.indexed)){const o=document.createElement("option");o.value=t.id;o.textContent=t.name;$("#fMeeting").appendChild(o);}
@@ -297,7 +306,10 @@ function openThread(sg,focusSid){
   const nq=[...labels.values()].filter(x=>x.t==="q"||x.t==="rq").length,na=[...labels.values()].filter(x=>x.t==="a").length;
   let h='<div class="ttools"><span>質問 '+nq+' 回・答弁 '+na+' 回</span><label><input type="checkbox" id="showFull"> 全文で表示</label><label><input type="checkbox" id="showChair"> 議長の進行発言も表示</label></div>';
   if(tp.length||tp2.length)h+='<div class="ippanbox" style="margin-bottom:10px"><b>質問項目</b>'+(tp.length?'<span class="srcnote">（議会だより 第'+tp[0].issue+'号）</span>':'<span class="srcnote">（会議録の答弁から推定）</span>')+'<ol class="iptopics">'+(tp.length?tp:tp2).map(x=>'<li>'+esc(x.title)+(x.theme?'<span class="ttag">'+esc(x.theme)+'</span>':'')+'</li>').join("")+'</ol></div>';
-  for(let k=sg._a;k<=sg._b;k++){const e=index[k];if(!e.text)continue;const chair=isChairRole(e.role),tl=labels.get(e.sid);const cls=chair?"t-chair":(tl&&tl.t==="a"?"t-a":"t-q");const cat=roleCat(e),bc=RB[cat]?RB[cat][0]:"";
+  // 議会だよりの各質問が始まる発言（qalign：機械推定）に目印を付ける
+  const qmark=new Map();if(sg.qalign){const pre=sg.from.slice(0,-4),f0=parseInt(sg.from.slice(-4),10);for(const [n,off] of sg.qalign){const t=tp.find(x=>x.n===n);const sid=pre+String(f0+off).padStart(4,"0");(qmark.get(sid)||qmark.set(sid,[]).get(sid)).push('議会だより 第'+n+'問'+(t?'「'+t.title+'」':''));}}
+  for(let k=sg._a;k<=sg._b;k++){const e=index[k];if(!e.text)continue;const chair=isChairRole(e.role),tl=labels.get(e.sid);
+    if(qmark.has(e.sid))h+=qmark.get(e.sid).map(x=>'<div class="qmark" title="議会だよりの質問と会議録の発言を機械的に対応付けた目安です">'+esc(x)+'</div>').join("");const cls=chair?"t-chair":(tl&&tl.t==="a"?"t-a":"t-q");const cat=roleCat(e),bc=RB[cat]?RB[cat][0]:"";
     if(chair&&sg.kind!=="vote"){h+='<div class="turn t-chair" data-sid="'+esc(e.sid)+'">議長：'+esc(e.text)+'</div>';continue;}
     h+='<div class="turn '+cls+(e.sid===focusSid?' focus':'')+'" data-sid="'+esc(e.sid)+'"><div>'+(tl&&tl.label?'<span class="tlabel">'+tl.label+'</span>':'')+'<b>'+esc(e.name)+'</b>'+(cat?'<span class="rolebadge '+bc+'">'+cat+'</span>':'')+(e.role?'<span class="rolename">'+esc(e.role)+'</span>':'')+'</div>'+turnText(e.text,e.sid===focusSid)+(e.pdf?'<div class="tfoot"><a class="pdflink" href="'+e.pdf+'" target="_blank" rel="noreferrer">会議録PDFを開く</a></div>':'')+'</div>';}
   $("#threadBody").innerHTML=h;dlg.classList.add("hide-chair");dlg.classList.remove("show-full");
