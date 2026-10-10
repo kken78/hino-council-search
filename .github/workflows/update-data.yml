@@ -1,0 +1,95 @@
+name: update-data
+# 週1回（月曜 6:00 JST）、日野町HPの会議録を巡回し、新しい会議・PDFがあれば取り込んで PR を作る。
+# 公開（build-deploy）とは別ジョブ：巡回に失敗しても公開中のサイトには影響しない。
+# PR は人が確認してからマージする（マージすると build-deploy が公開を更新する）。
+# 必要な設定：Settings → Actions → General → Workflow permissions の
+#   「Allow GitHub Actions to create and approve pull requests」をオン。
+# 注意：GITHUB_TOKEN で作った PR では他のワークフロー（ci）が自動では動かない。PR 本文に精度レポートを載せている。
+on:
+  schedule:
+    - cron: "0 21 * * 0" # 日曜 21:00 UTC = 月曜 6:00 JST
+  workflow_dispatch: {}
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: data/auto-update
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - name: 依存の取得（PDF抽出・HTML解析のみ。任意依存は入れない）
+        run: npm ci --omit=optional
+      - name: 会議録一覧を巡回
+        run: node scripts/crawl.mjs
+      - name: 変更の有無を確認
+        id: diff
+        run: |
+          if git diff --quiet -- public/data/meetings.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "新しい会議録はありません。"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: 取り込み（抽出・索引・審議構造・議会だより・注目テーマ・会議ページ）
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          node scripts/extract.mjs
+          node scripts/index.mjs
+          node scripts/link-bulletin.mjs
+          node scripts/highlights.mjs
+          node scripts/crawl-pages.mjs
+      - name: テストと精度レポート
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          npm test
+          node scripts/check-proceedings.mjs | tee "$RUNNER_TEMP/check.txt"
+          node scripts/build.mjs
+      - name: PR を作成（既に開いていれば更新）
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          NEW=$(node -e '
+            const { execSync } = require("node:child_process");
+            const before = JSON.parse(execSync("git show HEAD:public/data/meetings.json", { maxBuffer: 1 << 26 }).toString());
+            const after = require("./public/data/meetings.json");
+            const old = new Map(before.map((m) => [m.id, m.pdfs.length]));
+            const lines = after.filter((m) => !old.has(m.id) || old.get(m.id) !== m.pdfs.length)
+              .map((m) => "- " + m.name + "（" + m.id + "・PDF " + m.pdfs.length + "件" + (old.has(m.id) ? "・PDF追加" : "・新規") + "）");
+            console.log(lines.join("\n") || "- （会議一覧の更新のみ）");
+          ')
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add public/data data/text
+          git commit -m "data: 会議録の自動取り込み（$(date -u +%Y-%m-%d)）" -m "$NEW"
+          git push --force origin "$BRANCH"
+          {
+            echo "## 自動取り込み（週1回）"
+            echo "日野町HPの会議録一覧を巡回し、次の会議を取り込みました。"
+            echo
+            echo "$NEW"
+            echo
+            echo "## 精度レポート（scripts/check-proceedings.mjs）"
+            echo '```'
+            head -20 "$RUNNER_TEMP/check.txt"
+            echo '```'
+            echo
+            echo "確認のうえマージしてください（マージすると公開サイトが更新されます）。"
+            echo "一般質問者の不一致や採決結果の取りこぼしが増えていれば、解析器（scripts/lib/proceedings.mjs）の調整が必要です。"
+            echo
+            echo "このPRは .github/workflows/update-data.yml が自動で作成しました。"
+          } > "$RUNNER_TEMP/body.md"
+          # 既に開いている自動PRがあれば本文だけ更新（gh pr edit は Projects classic 廃止の影響で失敗するため REST を使う）
+          NUM=$(gh pr list --head "$BRANCH" --state open --json number -q '.[0].number')
+          if [ -n "$NUM" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/pulls/$NUM" -F "body=@$RUNNER_TEMP/body.md" >/dev/null
+          else
+            gh pr create --base main --head "$BRANCH" --title "data: 会議録の自動取り込み（$(date -u +%Y-%m-%d)）" --body-file "$RUNNER_TEMP/body.md"
+          fi
