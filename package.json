@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "cheerio": "^1.0.0",
-    "pdfjs-dist": "^4.6.82"
+    "pdfjs-dist": "^6.4.299"
   },
   "optionalDependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
