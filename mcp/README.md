@@ -51,6 +51,11 @@ Claude Desktop の場合は `claude_desktop_config.json` に追加：
 > 置き換えてください。v0.4.0 は分割前の `index.json` しか無いデータ（フォーク先など）も読めます。
 以後はキャッシュにより数秒で起動する。
 
+> **v0.4.2（2026-10）**：会議の情報（`list_meetings` の各会議と、ほかのツールが返す `meeting`）に、会議の日付
+> `date` とその出どころ `dateFrom`（`"pdf"`：日付のある原本PDFのうち最も早い日、`"name"`：会議名の「（M月D日）」から
+> 求めた日）を足しました。原本PDFに日付の無い臨時会でも日付が返ります。従来の `dates`（PDF の日付の一覧）は変えていません。
+> `meetings.json` に `date` の無いデータ（古い版・フォーク先）では、`dates` の最も早い日を `date`、`dateFrom` を `"pdf"` とします。
+
 ## データソースと更新
 
 起動時に GitHub の raw から取得し、`~/.cache/hino-council-mcp` に24時間キャッシュする。
@@ -76,7 +81,7 @@ Claude Desktop の場合は `claude_desktop_config.json` に追加：
 | `search_bulletin` | 議会だよりの一般質問を検索（空白=AND、先頭`-`=NOT） |
 | `get_bulletin_question` | 一般質問1件の全文と出典URL |
 | `find_minutes_for_bulletin` | 議会だよりの記事 → 対応する会議録ブロックへの入口 |
-| `list_meetings` | 収載済み会議の一覧 |
+| `list_meetings` | 収載済み会議の一覧（会議の日付 `date`・`dateFrom` を含む） |
 | `search_speeches` | 会議録の発言全文を検索（発言者・役職・年・場面で絞り込み可。結果に場面を表示） |
 | `get_speech` | 発言1件＋前後の文脈 |
 | `get_exchange` | ある会議での議員の質疑応酬をまとめて取得（長文はページング）。各発言に質問／再質問／答弁の種別 |
