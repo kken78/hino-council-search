@@ -56,7 +56,7 @@ const CACHE_DIR =
   process.env.HINO_MCP_CACHE || path.join(os.homedir(), ".cache", "hino-council-mcp");
 const MAX_AGE_MS = Number(process.env.HINO_MCP_MAX_AGE_HOURS || 24) * 3600 * 1000;
 
-const SERVER_INFO = { name: "hino-council-mcp", version: "0.4.1" };
+const SERVER_INFO = { name: "hino-council-mcp", version: "0.4.2" };
 
 // クライアント（Claude）への利用方針。冒頭のデータ自己申告は起動時に実データから生成する
 // （council-dashboard はフォークで他自治体運用があるため、「日野町」をハードコードしない）。
@@ -277,9 +277,16 @@ async function boot() {
 
 // ---------------------------------------------------------------- ヘルパー
 
+// 会議の要約。dates は PDF に記された日付の一覧（日付の無い PDF しか無い臨時会などでは空）。
+// date は会議の日付：meetings.json の date（v0.4.2〜。日付のある PDF のうち最も早い日、無ければ会議名の
+// 「（M月D日）」から求めた日）を使い、dateFrom はその出どころ（"pdf"・"name"）。date の無いデータ（古い版・
+// フォーク先）では dates の最も早い日を date とし dateFrom を "pdf" にする。dates も空ならどちらも null。
 function meetingSummary(m) {
   const dates = [...new Set((m.pdfs || []).map((p) => p.date).filter(Boolean))].sort();
-  return { meetingId: m.id, name: m.name, type: m.type, year: m.year, dates, url: m.url };
+  let date = null, dateFrom = null;
+  if (m.date) [date, dateFrom] = [m.date, m.dateFrom || null];
+  else if (dates.length) [date, dateFrom] = [dates[0], "pdf"];
+  return { meetingId: m.id, name: m.name, type: m.type, year: m.year, dates, date, dateFrom, url: m.url };
 }
 
 function findBulletin(id) {
@@ -522,7 +529,7 @@ const TOOLS = [
   },
   {
     name: "list_meetings",
-    description: "会議録コーパスに収載済みの会議一覧（年・種別で絞り込み可）。",
+    description: "会議録コーパスに収載済みの会議一覧（年・種別で絞り込み可）。各会議の date は会議の日付（日付のある原本PDFのうち最も早い日。PDFに日付が無い会議は会議名の「（M月D日）」から求めた日）、dateFrom はその出どころ（\"pdf\" または \"name\"）。dates は原本PDFに記された日付の一覧で、古い臨時会などでは空のことがある。他のツールが返す meeting も同じ形。",
     inputSchema: {
       type: "object",
       properties: {
