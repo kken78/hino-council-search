@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { splitSpeeches, extractGian, extractGianFromToc, detectAgendaRef, guessKind, stripPageHeads } from "./lib/speech.mjs";
 import { textKey } from "./lib/keys.mjs";
+import { dateFromName } from "./lib/dates.mjs";
 import { parseDay } from "./lib/proceedings.mjs";
 import { writeIndex } from "./lib/data.mjs";
 
@@ -48,14 +49,6 @@ function detectIppan(raw) {
     out.push({ member, theme: "" });
   }
   return out;
-}
-
-// 日付の無い本文PDF（臨時会の「本文.pdf」）は会議名の「（1月23日）」と年から日付を補う
-function dateFromName(m) {
-  const x = (m.name || "").match(/[（(]\s*([0-9０-９]{1,2})月([0-9０-９]{1,2})日\s*[）)]/);
-  if (!x || !m.year) return null;
-  const h = (s) => s.replace(/[０-９]/g, (d) => "０１２３４５６７８９".indexOf(d));
-  return `${m.year}-${h(x[1]).padStart(2, "0")}-${h(x[2]).padStart(2, "0")}`;
 }
 
 function run() {

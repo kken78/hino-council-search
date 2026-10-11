@@ -229,6 +229,8 @@ gikai-search/
     "type": "定例会",
     "era": "令和7年",
     "year": 2025,
+    "date": "2025-06-12",
+    "dateFrom": "pdf",
     "url": "https://www.town.shiga-hino.lg.jp/0000008489.html",
     "pdfs": [
       { "label": "第2日(6月12日)", "date": "2025-06-12", "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000008/8489/20250612kaigiroku.pdf" }
@@ -236,6 +238,9 @@ gikai-search/
   }
 ]
 ```
+- `date`：会議の日付。`pdfs[].date` のある PDF のうち最も早い日。どの PDF にも日付が無い会議（2017〜2023年の臨時会）は、会議名の「（M月D日）」と `year` から求めた日（発言索引の `date` と同じ求め方。`scripts/lib/dates.mjs`）。
+- `dateFrom`：`date` をどこから求めたか。`"pdf"` か `"name"`（どちらでも求められなければ `date`・`dateFrom` とも `null`）。
+- `pdfs[].date` は発言ID（sid）の真ん中に使うので、日付が無くても埋めない。
 
 ### index/<年>.json ＋ index-manifest.json（発言単位／検索本体）
 > 2026-10 に1ファイル（index.json・約46MB）から年別ファイルへ分割した（GitHub の 50MB 警告を避け、更新時の差分を小さくするため）。
