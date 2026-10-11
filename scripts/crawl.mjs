@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import { getPage, ROOT, sleep } from "./lib/fetchx.mjs";
 import { eraToYear, kanjiNum } from "./lib/eras.mjs";
 import { SITE } from "./lib/site.mjs";
+import { meetingDate } from "./lib/dates.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dirname, "../public/data");
@@ -88,7 +89,8 @@ async function run() {
         pdfs.push({ label, date: guessDate(href, label, year), url: new URL(href, ROOT).href });
       }
       if (!pdfs.length) continue;
-      const rec = { id, name: title, type: /臨時/.test(title) ? "臨時会" : "定例会", era, year, url, pdfs };
+      // date／dateFrom：会議の日付（scripts/lib/dates.mjs）。pdfs[].date は sid に使うので変えない
+      const rec = { id, name: title, type: /臨時/.test(title) ? "臨時会" : "定例会", era, year, ...meetingDate({ name: title, year, pdfs }), url, pdfs };
       meetings.push(rec);
       const t = toc.find((x) => x.id === id);
       if (t) { t.indexed = true; t.pdfs = pdfs; t.name = title; }
