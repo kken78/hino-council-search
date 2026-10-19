@@ -14,10 +14,15 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 export function applySite(tpl) {
   const ui = SITE.ui || {};
   const links = (ui.links || []).map((l) => `<a href="${esc(l.url)}" target="_blank" rel="noreferrer" style="margin-left:8px">${esc(l.label)}</a>`).join("");
+  // ライセンスの一文。リンクの文字は LICENSE-DATA.md（preview.html ではリンクを外して文字だけ残す：data-keep-text）
+  const license = ui.license_note
+    ? `<br>${esc(ui.license_note)}${ui.license_url ? ` <a href="${esc(ui.license_url)}" target="_blank" rel="noreferrer" data-keep-text>LICENSE-DATA.md</a>` : ""}。`
+    : "";
   return tpl
     .replaceAll("{{TITLE}}", esc(ui.title || "会議録 横断検索"))
     .replaceAll("{{EYEBROW}}", esc(ui.eyebrow || ""))
     .replaceAll("{{FOOTER_NOTE}}", esc(ui.footer_note || ""))
     .replaceAll("{{SOURCE}}", esc(SITE.site.source_label || ""))
-    .replaceAll("{{FOOTER_LINKS}}", links);
+    .replaceAll("{{FOOTER_LINKS}}", links)
+    .replaceAll("{{LICENSE_NOTE}}", license);
 }

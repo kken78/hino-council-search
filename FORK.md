@@ -30,6 +30,7 @@
 | `ui.title` / `ui.eyebrow` | 画面の表題・上の小見出し | 日野町議会 会議録 横断検索 など |
 | `ui.offline_file` | オフライン版（単一HTML）のファイル名 | 日野町議会-会議録検索.html |
 | `ui.footer_note` / `ui.links` | フッターの一文・リンク（議会だよりダッシュボードなど。無ければ空） | |
+| `ui.license_note` / `ui.license_url` | フッターのライセンスの一文と、LICENSE-DATA.md へのリンク（無ければ表示しない） | プログラムは MIT License、…著作権は日野町議会にあります。詳しくは |
 | `bulletin.questions_url` | （任意）議会だよりダッシュボード（council-dashboard）の `questions.json`。無ければ省略 | |
 
 ## 3. 日野町のデータを消す

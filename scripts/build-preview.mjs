@@ -38,6 +38,8 @@ let tpl = applySite(R("scripts/preview.tpl.html"));
 // ローカル専用：フッター等に直書きされた外部リンク（議会だよりダッシュボード等）を除去。
 // preview.html は完全ローカル用のため、インターネット向けURLのリンクを持たせない。
 // （PDF/会議ページのリンクは上で既にローカル化／非表示にしている）
+// ただし data-keep-text の付いたリンク（フッターの LICENSE-DATA.md）は、リンクだけ外して文字を残す。
+tpl = tpl.replace(/<a\b[^>]*\bdata-keep-text\b[^>]*>([\s\S]*?)<\/a>/g, "$1");
 tpl = tpl.replace(/\s*<a\b[^>]*href="https?:\/\/[^"]*"[^>]*>[\s\S]*?<\/a>/g, "");
 const out = tpl.replace("/*__BOOT__*/", "start(" + JSON.stringify(data) + ");");
 writeFileSync(join(root, "preview.html"), out);
