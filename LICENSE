@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 日野町議会 議事録横断検索システム contributors
+Copyright (c) 2026 Kenjiro HIGASHI
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-データ（会議録PDF・抽出テキスト）の権利は日野町に帰属します。再配布・二次利用は
-出典元（日野町ホームページ「会議録」）の利用条件に従ってください。
