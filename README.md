@@ -164,7 +164,7 @@
 ```
 gikai-search/
 ├─ README.md / DEV_NOTES.md                # 仕様 / 実装・運用メモ
-├─ package.json / LICENSE / .gitignore
+├─ package.json / LICENSE / LICENSE-DATA.md / .gitignore
 ├─ site.config.json                       # 自治体ごとの設定（巡回先・ページ形式・表題・出典など。他自治体は FORK.md）
 ├─ FORK.md                                # 他の自治体で使う手順
 ├─ .github/workflows/build-deploy.yml      # push時ビルド＆Pagesデプロイ（build.mjs のみ）
@@ -686,7 +686,14 @@ jobs:
 
 ## 13. ライセンス・免責
 
-- ソフトウェア：MIT License を想定（`LICENSE` を別途配置）。
-- データ：日野町ホームページ「会議録」の公開PDFを出典とする。再配布・二次利用は出典元の利用条件に従う。
+対象ごとに扱いが異なります。詳しくは [LICENSE-DATA.md](LICENSE-DATA.md) を参照してください。
+
+- プログラム（scripts/、mcp/、.github/、site.config.json、package.json）：MIT License（[LICENSE](LICENSE)）
+- データの構造（public/data/ の発言の区切り、発言者の付け方、審議の場面、議案の一覧など。dict/ の辞書）：CC BY 4.0
+- 会議録から転記した部分（発言の文章、議案名など）：このリポジトリのライセンスの対象外（著作権は日野町議会にあります）
+- 議会だよりの文章（council-dashboard から取り込んで表示している問・答）：このリポジトリのライセンスの対象外（著作権は日野町議会にあります）
+
+免責：
+
 - 本システムの検索結果は機械処理によるもので、原本と差異が生じ得る。正確な内容は各PDF（原本）で確認すること。
 - 生成AIによる要約・分類・回答は補助情報であり、正確性を保証しない。重要な判断は原文を確認すること。

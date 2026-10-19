@@ -262,9 +262,12 @@ async function boot() {
     (withId > 0 && linked === 0) ||
     (dashDomains.length > 0 && minDomains.length > 0 && !dashDomains.some((d) => minDomains.includes(d)));
 
+  // 議会だより・会議録の文章の権利者。出典の表記（例：「日野町議会だより 第24号〜」）から議会名を読み取る。
+  const council = ((dash.source || "").match(/^(\S+?議会)だより/) || [])[1] || "各議会";
   const srcLine =
     `このサーバーが現在提供しているデータ: (1) 議会だより一般質問 ${Q.length}件＝出典「${dash.source || "出典情報なし"}」 ` +
     `/ (2) 会議録コーパス ${MEETINGS.length}会議・${IDX.length}発言＝${minDomains.join(", ") || "取得元ドメイン不明"}。` +
+    `議会だより・会議録の文章の著作権は${council}にある。` +
     "類似ダッシュボードは他自治体でも運用されているため、回答時は上記の自治体・出典を前提とし、別自治体のデータと混同しないこと。";
   const warnLine = META.mismatch
     ? "【警告】議会だより側と会議録側で会議ID・ドメインが一致しません。両データソースが別自治体を指している可能性があります。この旨を利用者に必ず伝え、横断参照（find_minutes_for_bulletin など）の結果は使わないでください。"
