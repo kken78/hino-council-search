@@ -18,7 +18,11 @@ export function applySite(tpl) {
   const license = ui.license_note
     ? `<br>${esc(ui.license_note)}${ui.license_url ? ` <a href="${esc(ui.license_url)}" target="_blank" rel="noreferrer" data-keep-text>LICENSE-DATA.md</a>` : ""}。`
     : "";
+  // システムの位置づけの一文（非公式の試作である等）。空なら上部・フッターとも何も出さない
+  const pos = ui.position_note ? esc(ui.position_note) : "";
   return tpl
+    .replaceAll("{{POSITION_TOP}}", pos ? `<p class="posnote" style="font-size:12px;line-height:1.6;color:var(--slate);margin:8px 0 0">${pos}</p>` : "")
+    .replaceAll("{{POSITION_NOTE}}", pos ? `${pos}<br>` : "")
     .replaceAll("{{TITLE}}", esc(ui.title || "会議録 横断検索"))
     .replaceAll("{{EYEBROW}}", esc(ui.eyebrow || ""))
     .replaceAll("{{FOOTER_NOTE}}", esc(ui.footer_note || ""))
