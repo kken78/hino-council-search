@@ -27,7 +27,7 @@
     "license_url": "https://github.com/kken78/hino-council-search/blob/main/LICENSE-DATA.md",
     "links": [
       { "label": "議会だよりダッシュボードを開く ↗", "url": "https://kken78.github.io/council-dashboard/" },
-      { "label": "日野町データポータル（非公式）", "url": "https://kken78.github.io/hino-portal/" }
+      { "label": "日野町データポータル（非公式）", "url": "https://kken78.github.io/hino-portal/", "top": true }
     ]
   },
   "bulletin": {
