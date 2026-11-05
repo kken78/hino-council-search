@@ -30,7 +30,7 @@
 | `ui.title` / `ui.eyebrow` | 画面の表題・上の小見出し | 日野町議会 会議録 横断検索 など |
 | `ui.offline_file` | オフライン版（単一HTML）のファイル名 | 日野町議会-会議録検索.html |
 | `ui.position_note` | （任意）システムの位置づけの一文（非公式の試作であることなど）。画面上部とフッターの先頭に出す。無ければ表示しない | このページは一個人による提案・試作です。… |
-| `ui.footer_note` / `ui.links` | フッターの一文・リンク（議会だよりダッシュボードなど。無ければ空） | |
+| `ui.footer_note` / `ui.links` | フッターの一文・リンク（議会だよりダッシュボードなど。無ければ空）。リンクに `"top": true` を付けると、画面上部（位置づけの一文の先頭）にも「← 表示名」で出す（戻り先のポータルなど）。上部の表示名は `top_label`、無ければ `label` を使う。フッターは `label` | |
 | `ui.license_note` / `ui.license_url` | フッターのライセンスの一文と、LICENSE-DATA.md へのリンク（無ければ表示しない） | プログラムは MIT License、…著作権は日野町議会にあります。詳しくは |
 | `bulletin.questions_url` | （任意）議会だよりダッシュボード（council-dashboard）の `questions.json`。無ければ省略 | |
 
