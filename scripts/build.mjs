@@ -46,11 +46,13 @@ if (process.env.HINO_BUNDLE_PDF) {
 // 実行時の正規化ゼロ＝初回検索を即応答に。フロントは e.norm があればそれを使う。
 for (const e of big.index) if (e.norm == null) e.norm = buildNormStr(e.text || "");
 
-let tpl = applySite(R("scripts/preview.tpl.html"));
 const TITLE = applySite("{{TITLE}}"), OFFLINE = (SITE.ui && SITE.ui.offline_file) || "会議録検索.html";
-tpl = tpl.replace(/<div class="note">[\s\S]*?<\/div>\n/, "")
+const shape = (t) => t.replace(/<div class="note">[\s\S]*?<\/div>\n/, "")
          .replace(/ <span style="font-size:12px;color:#9fb0c6">（プレビュー）<\/span>/, "")
          .replace(`<title>${TITLE}（プレビュー）</title>`, `<title>${TITLE}</title>`);
+const tpl = shape(applySite(R("scripts/preview.tpl.html")));
+// オンライン版だけ OGP のタグを入れる（site.config.json の ui.ogp。無ければ tpl と同じ）
+const tplOnline = shape(applySite(R("scripts/preview.tpl.html"), { ogp: true }));
 
 // 1) オフライン配布用：全データ埋め込み
 const allData = { ...big, ...small, proceedings };
@@ -70,7 +72,9 @@ const boot = "const DICT=" + JSON.stringify(small.dict) + ";const TOPICS=" + JSO
   + "const app=start({index,gian,toc,meetings,proceedings,dict:DICT,topics:TOPICS,highlights:HL,pages:PAGES,loading});"
   + "if(rest.length){const more=await Promise.all(rest.map(s=>J('data/'+s.file)));app.addIndex(more.flat(),{loaded:man.shards.length,done:true});}"
   + "}catch(e){document.getElementById('results').innerHTML='<div class=\"empty\">データの読み込みに失敗しました（'+e+'）。ローカルで開く場合は単一HTML版をご利用ください。</div>';}})();";
-writeFileSync(join(root, "dist/online/index.html"), tpl.replace("/*__BOOT__*/", boot));
+writeFileSync(join(root, "dist/online/index.html"), tplOnline.replace("/*__BOOT__*/", boot));
+// OGP 画像（public/og.png、1200×630）を配信物の root に置く（ui.ogp.image があるときだけ）
+if (SITE.ui && SITE.ui.ogp && SITE.ui.ogp.image && existsSync(join(root, "public/og.png"))) copyFileSync(join(root, "public/og.png"), join(root, "dist/online/og.png"));
 writeIndex(join(root, "dist/online/data"), big.index);
 for (const f of ["gian.json", "toc.json", "meetings.json"]) writeFileSync(join(root, "dist/online/data", f), JSON.stringify(big[f.replace(".json", "")]));
 if (proceedings) writeFileSync(join(root, "dist/online/data/proceedings.json"), JSON.stringify(proceedings));

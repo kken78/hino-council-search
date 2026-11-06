@@ -31,12 +31,14 @@
 | `ui.offline_file` | オフライン版（単一HTML）のファイル名 | 日野町議会-会議録検索.html |
 | `ui.position_note` | （任意）システムの位置づけの一文（非公式の試作であることなど）。画面上部とフッターの先頭に出す。無ければ表示しない | このページは一個人による提案・試作です。… |
 | `ui.footer_note` / `ui.links` | フッターの一文・リンク（議会だよりダッシュボードなど。無ければ空）。リンクに `"top": true` を付けると、画面上部（位置づけの一文の先頭）にも「← 表示名」で出す（戻り先のポータルなど）。上部の表示名は `top_label`、無ければ `label` を使う。フッターは `label` | |
+| `ui.ogp` | （任意）SNS で共有したときのタグ。`url`（公開ページの URL）・`image`（OGP 画像の URL、1200×630）・`image_alt`（画像の説明）。オンライン版の `<head>` にだけ出す。`image` があれば `public/og.png` を配信物の root（`dist/online/og.png`）に置く。無ければタグも画像も出さない | https://kken78.github.io/hino-council-search/ など |
 | `ui.license_note` / `ui.license_url` | フッターのライセンスの一文と、LICENSE-DATA.md へのリンク（無ければ表示しない） | プログラムは MIT License、…著作権は日野町議会にあります。詳しくは |
 | `bulletin.questions_url` | （任意）議会だよりダッシュボード（council-dashboard）の `questions.json`。無ければ省略 | |
 
 ## 3. 日野町のデータを消す
 - `public/data/`（`meetings.json`・`toc.json`・`index/`・`index-manifest.json`・`gian.json`・`proceedings.json`・`highlights.json`・`meeting_pages.json`）
 - `data/text/`（抽出済みテキスト）
+- `public/og.png`・`assets/og.svg`（日野町版の OGP 画像と編集元）。自分の画像に差し替えるか、`ui.ogp` を消す
 - 辞書のうち日野町固有のもの：`dict/yomi.json`（地名のよみ）・`dict/topics.json`・`dict/highlight-themes.json`（注目テーマの定義）。
   `dict/variants.json`（異体字）・`dict/synonyms.json`（同義語）は一般的なものなので、そのまま使ってよい。
 

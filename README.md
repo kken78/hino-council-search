@@ -199,6 +199,8 @@ gikai-search/
 │  ├─ pdf/               # ダウンロードPDF（キャッシュ・.gitignore）
 │  ├─ text/              # 抽出テキスト（コミット可）
 │  └─ cache/             # offline用ページキャッシュ（.gitignore）
+├─ assets/og.svg                           # OGP 画像の編集元
+├─ public/og.png                           # OGP 画像（1200×630）。build.mjs が dist/online/og.png に置く（site.config.json の ui.ogp）
 ├─ public/data/                            # 公開する索引（フロントが読む・コミット対象）
 │  ├─ meetings.json      # 全文索引対象の会議
 │  ├─ toc.json           # 年度別カタログ（全会議の目次）
