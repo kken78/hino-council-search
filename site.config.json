@@ -25,6 +25,11 @@
     "footer_note": "議事録検索は単体で動作します（議会だよりダッシュボードとは疎結合で連携可）。",
     "license_note": "プログラムは MIT License、会議録と議会だよりの文章の著作権は日野町議会にあります。詳しくは",
     "license_url": "https://github.com/kken78/hino-council-search/blob/main/LICENSE-DATA.md",
+    "ogp": {
+      "url": "https://kken78.github.io/hino-council-search/",
+      "image": "https://kken78.github.io/hino-council-search/og.png",
+      "image_alt": "会議録 横断検索。一個人による提案・試作です。議会の公式な成果物ではありません"
+    },
     "links": [
       { "label": "議会だよりダッシュボードを開く ↗", "url": "https://kken78.github.io/council-dashboard/" },
       { "label": "日野町データポータル（非公式）", "url": "https://kken78.github.io/hino-portal/", "top": true, "top_label": "日野町データポータル" }

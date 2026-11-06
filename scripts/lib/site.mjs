@@ -10,8 +10,29 @@ export const SITE = JSON.parse(readFileSync(path, "utf8"));
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
+// SNS で共有したときのタグ（OGP・Twitter Card）。値は ui.ogp（url, image, image_alt）。
+// url があれば og:type・og:title（ui.title）・og:description（テンプレートの見出しの下の一文 .mast-sub）・og:url を、
+// image があれば og:image（1200×630）・og:image:alt・twitter:card・twitter:image を出す。どちらも無ければ空。
+function ogpTags(tpl) {
+  const o = (SITE.ui && SITE.ui.ogp) || {};
+  const tags = [];
+  if (o.url) {
+    const sub = tpl.match(/<p class="mast-sub">([\s\S]*?)<\/p>/);
+    tags.push('<meta property="og:type" content="website" />', `<meta property="og:title" content="${esc(SITE.ui.title || "会議録 横断検索")}" />`);
+    if (sub) tags.push(`<meta property="og:description" content="${esc(sub[1].replace(/<[^>]+>/g, ""))}" />`);
+    tags.push(`<meta property="og:url" content="${esc(o.url)}" />`);
+  }
+  if (o.image) {
+    tags.push(`<meta property="og:image" content="${esc(o.image)}" />`, '<meta property="og:image:width" content="1200" />', '<meta property="og:image:height" content="630" />');
+    if (o.image_alt) tags.push(`<meta property="og:image:alt" content="${esc(o.image_alt)}" />`);
+    tags.push('<meta name="twitter:card" content="summary_large_image" />', `<meta name="twitter:image" content="${esc(o.image)}" />`);
+  }
+  return tags.map((t) => "\n" + t).join("");
+}
+
 // テンプレート（scripts/preview.tpl.html）の {{…}} を設定値で置き換える
-export function applySite(tpl) {
+// ogp: true のときだけ {{OGP}} に OGP のタグを入れる（GitHub Pages のオンライン版だけ。オフライン版・preview.html は空）
+export function applySite(tpl, { ogp = false } = {}) {
   const ui = SITE.ui || {};
   const links = (ui.links || []).map((l) => `<a href="${esc(l.url)}" target="_blank" rel="noreferrer" style="margin-left:8px">${esc(l.label)}</a>`).join("");
   // ライセンスの一文。リンクの文字は LICENSE-DATA.md（preview.html ではリンクを外して文字だけ残す：data-keep-text）
@@ -24,6 +45,7 @@ export function applySite(tpl) {
   // 表示名は top_label、無ければフッターと同じ label
   const back = (ui.links || []).filter((l) => l.top).map((l) => `<a href="${esc(l.url)}" style="font-weight:700;margin-right:1em;white-space:nowrap">← ${esc(l.top_label || l.label)}</a>`).join("");
   return tpl
+    .replaceAll("{{OGP}}", ogp ? ogpTags(tpl) : "")
     .replaceAll("{{POSITION_TOP}}", pos || back ? `<p class="posnote" style="font-size:12px;line-height:1.6;color:var(--slate);margin:8px 0 0">${back}${pos}</p>` : "")
     .replaceAll("{{POSITION_NOTE}}", pos ? `${pos}<br>` : "")
     .replaceAll("{{TITLE}}", esc(ui.title || "会議録 横断検索"))
