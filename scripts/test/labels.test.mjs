@@ -1,4 +1,4 @@
-// 一般質問の見出し（scripts/lib/labels.mjs）と、画面・MCP への写しのテスト。
+// 一般質問の見出し（scripts/lib/labels.mjs）と、画面・MCP への写しのテスト（質疑の見出しは shitsugi-ledger.test.mjs）。
 // 実行: npm test（node --test）。
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -60,6 +60,7 @@ test("画面のひな形に見出しの関数を埋め込める", () => {
   const tpl = readFileSync(join(root, "scripts/preview.tpl.html"), "utf8");
   const out = inlineLabels(tpl);
   assert.ok(out.includes("function ledgerTurnLabels(sg)"));
+  assert.ok(out.includes("function shitsugiTurnLabels(sg)"));
   assert.ok(!/^export /m.test(labelsSource()));
   assert.ok(!labelsSource().includes("import "));
 });

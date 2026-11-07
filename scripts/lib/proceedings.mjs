@@ -138,7 +138,7 @@ const topicOfQuestion = (q) => firstMatch(q, TOPIC_Q);
 const PHRASES = [
   [/(?<!あわせて、?|から)日程第[0-9０-９]+/g, "agenda"], // 「あわせて、日程第30…」「日程第3から日程第29まで」の後側は同じ場面の続き
   [/一般質問を(行います|許可|続行|続け)|順次発言を許可|一般質問に入ります/g, "ippan"],
-  [/委員長報告に対する質疑/g, "reportqa"],
+  [/委員長(報告)?に対する質疑/g, "reportqa"],
   [/質疑に入ります|質疑を行います|質疑は(ございませんか|ありませんか)|質疑ございませんか|ほかに質疑/g, "shitsugi"],
   [/(審査|調査)(の)?(結果|経過)(の)?報告を求めます|委員長(より|から)?(の)?報告を求めます|諸般の報告を行います/g, "report"],
   [/討論に入ります|討論を行います|討論は(ございませんか|ありませんか)|討論ございませんか|ほかに討論/g, "debate"],
@@ -199,6 +199,8 @@ export function parseDay(speeches, { date = null, pdf = null, agenda = [] } = {}
       const b = expandBills(k >= 0 ? t.slice(k) : t);
       if (b.length && /日程第|議題|採決|付託|提案理由/.test(t)) ctxBills = b;
       for (const [, act] of hits) {
+        // 委員長報告に対する質疑の中の「質疑に入ります」「ほかに質疑」は場面の続き（reportqa のまま）
+        if (act === "shitsugi" && (scene === "reportqa" || hits.some((h) => h[1] === "reportqa"))) continue;
         if (act === "aside") { close(); aside = scene; scene = null; }
         else if (act === "agenda" || act === "end") { close(); scene = null; aside = undefined; }
         else { if (act !== scene) close(); scene = act; }

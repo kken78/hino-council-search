@@ -56,7 +56,7 @@ const CACHE_DIR =
   process.env.HINO_MCP_CACHE || path.join(os.homedir(), ".cache", "hino-council-mcp");
 const MAX_AGE_MS = Number(process.env.HINO_MCP_MAX_AGE_HOURS || 24) * 3600 * 1000;
 
-const SERVER_INFO = { name: "hino-council-mcp", version: "0.5.0" };
+const SERVER_INFO = { name: "hino-council-mcp", version: "0.6.0" };
 
 // クライアント（Claude）への利用方針。冒頭のデータ自己申告は起動時に実データから生成する
 // （council-dashboard はフォークで他自治体運用があるため、「日野町」をハードコードしない）。
@@ -382,9 +382,66 @@ function ledgerTurnLabels(sg) {
   return m;
 }
 
-// 区切り → Map<from からの相対位置, 議長の注意の印>
+// 区切り → Map<from からの相対位置, 議長の注意の印>（質疑では notice は範囲の注意）
 function chairLabels(sg) {
-  return new Map((sg.chair || []).map(([off, kind]) => [off, CHAIR_LABEL[kind] || kind]));
+  const L = sg.kind === "shitsugi" ? SHITSUGI_CHAIR_LABEL : CHAIR_LABEL;
+  return new Map((sg.chair || []).map(([off, kind]) => [off, L[kind] || kind]));
+}
+
+// ---- 質疑の台帳（parts）の見出し ----
+// 台帳の発言の種類 → 見出しの名前（質疑）
+const SHITSUGI_TURN_NAME = { q: "質疑", rq: "再質疑", rrq: "再々質疑", q4: "4回目の質疑", req: "意見・要望", x: "回に数えない発言" };
+const SHITSUGI_CHAIR_LABEL = { rounds: "議長：回数の注意", notice: "議長：範囲の注意" };
+// bill の特別な値 → 「対象の議案」の箱での名前と、見出しでの名前
+const BILL_BOX_NAME = { "議題外": "議題に無い事柄", "不明": "議案を決められない質疑" };
+const BILL_SHORT_NAME = { "議題外": "議題外", "不明": "議案不明" };
+function billShort(b) {
+  return BILL_SHORT_NAME[b] || b;
+}
+
+// 1つの発言の見出し（質疑）。parts は [{ bill, p, kind }]（段落の順）
+//   同じ種類が続く部分は1つにまとめ、議案を「／」で並べる。部分が2つ以上なら段落（p）を添える。
+//   発言の全部が意見・要望（または回に数えない発言）なら議案を添えない。
+function shitsugiPartLabel(parts) {
+  const multi = parts.length >= 2;
+  if (parts.every((x) => x.kind === "req")) return SHITSUGI_TURN_NAME.req;
+  if (parts.every((x) => x.kind === "x")) return "（" + SHITSUGI_TURN_NAME.x + "）";
+  const groups = [];
+  for (const x of parts) {
+    const g = groups[groups.length - 1];
+    if (g && g.kind === x.kind) g.items.push(x);
+    else groups.push({ kind: x.kind, items: [x] });
+  }
+  return groups.map((g) => (SHITSUGI_TURN_NAME[g.kind] || g.kind) + "（" + g.items.map((x) => billShort(x.bill) + (multi && x.p ? " p" + x.p : "")).join("／") + "）").join("／");
+}
+
+// 区切り（質疑の台帳のあるもの）→ Map<from からの相対位置, { kind, parts:[{ bill, p, kind }], bills, label }>
+//   議員の発言は台帳の turns から（1つの発言が複数の議案・段落にまたがるときは段落の順に並べる）。
+//   答弁は台帳の answers から、結びついた議案を添える。台帳の answers に無い機械の答弁（a）は「答弁」とだけ付ける。
+function shitsugiTurnLabels(sg) {
+  const m = new Map();
+  for (const pt of sg.parts || []) {
+    for (const [off, p, kind] of pt.turns) {
+      const cur = m.get(off) || { parts: [] };
+      cur.parts.push({ bill: pt.bill, p: p === "" || p == null ? null : p, kind });
+      m.set(off, cur);
+    }
+  }
+  for (const v of m.values()) {
+    v.parts.sort((a, b) => (a.p || 0) - (b.p || 0));
+    v.kind = v.parts[v.parts.length - 1].kind;
+    v.bills = [...new Set(v.parts.map((x) => x.bill))];
+    v.label = shitsugiPartLabel(v.parts);
+  }
+  const ans = new Map();
+  for (const pt of sg.parts || []) for (const off of pt.answers || []) {
+    if (m.has(off)) continue;
+    const a = ans.get(off) || ans.set(off, []).get(off);
+    if (!a.includes(pt.bill)) a.push(pt.bill);
+  }
+  for (const [off, bills] of ans) m.set(off, { kind: "a", parts: [], bills, label: "答弁（" + bills.map(billShort).join("・") + "）" });
+  for (const [off, t] of sg.turns || []) if (t === "a" && !m.has(off)) m.set(off, { kind: "a", parts: [], bills: [], label: "答弁" });
+  return m;
 }
 
 // 問いの題の出どころの注記（議会だよりは号を添える）
@@ -421,7 +478,39 @@ function ledgerQuestions(sg) {
   });
 }
 function ledgerChair(sg) {
-  return (sg.chair || []).map(([off, kind]) => ({ sid: sidAt(sg.from, off), note: (CHAIR_LABEL[kind] || kind).replace(/^議長：/, "") }));
+  return [...chairLabels(sg)].map(([off, lb]) => ({ sid: sidAt(sg.from, off), note: lb.replace(/^議長：/, "") }));
+}
+// 台帳のある質疑の区切り → 議案ごとの発言と答弁（parts）
+//   meetingId は件名を gian.json から引くため
+function ledgerParts(sg, meetingId) {
+  const agenda = (GIAN && GIAN[meetingId] && GIAN[meetingId].agenda) || [];
+  return (sg.parts || []).map((pt) => {
+    const turns = {};
+    for (const k of KIND_ORDER) {
+      const list = pt.turns.filter(([, , x]) => x === k).map(([off, p]) => ({ sid: sidAt(sg.from, off), ...(p !== "" && p != null ? { paragraph: p } : {}) }));
+      if (list.length) turns[SHITSUGI_TURN_NAME[k]] = list;
+    }
+    const a = agenda.find((x) => x.no === pt.bill);
+    return {
+      bill: pt.bill,
+      ...(BILL_BOX_NAME[pt.bill] ? { bill_note: BILL_BOX_NAME[pt.bill] } : a ? { title: a.title } : {}),
+      start: pt.start ? { sid: sidAt(sg.from, pt.start[0]), paragraph: pt.start[1] } : null,
+      turns,
+      answers: (pt.answers || []).map((off) => sidAt(sg.from, off)),
+      conf: pt.conf,
+    };
+  });
+}
+// 台帳のある質疑の区切りの発言ごとの見出し（sid → 返す項目）
+function shitsugiTurnKinds(sg) {
+  const m = new Map();
+  for (const [off, v] of shitsugiTurnLabels(sg)) {
+    const sid = sidAt(sg.from, off);
+    if (v.kind === "a") m.set(sid, { turn: v.label, ...(v.bills.length ? { bills: v.bills } : {}) });
+    else m.set(sid, { turn: v.label, bills: v.bills, parts: v.parts.map((x) => ({ bill: x.bill, ...(x.p ? { paragraph: x.p } : {}), kind: SHITSUGI_TURN_NAME[x.kind] || x.kind })) });
+  }
+  for (const [off, lb] of chairLabels(sg)) m.set(sidAt(sg.from, off), { turn: "議長（進行）", chair_note: lb.replace(/^議長：/, "") });
+  return m;
 }
 // 台帳のある区切りの発言ごとの見出し（sid → 返す項目）
 function ledgerTurnKinds(sg) {
@@ -478,8 +567,11 @@ function memberBlocks(meetingId, nMember) {
         ...(sg.bills && sg.bills.length ? { bills: sg.bills } : {}),
         ...(sg.stance ? { stance: sg.stance } : {}),
         ...(sg.committee ? { committee: sg.committee } : {}),
-        ...(sg.kind === "ippan" ? { structure: sg.ledger ? "台帳" : "推定" } : {}),
-        ...(sg.ledger
+        ...(sg.kind === "ippan" || sg.kind === "shitsugi" ? { structure: sg.ledger ? "台帳" : "推定" } : {}),
+        ...(sg.answerer ? { answerer: sg.answerer } : {}),
+        ...(sg.ledger && sg.kind === "shitsugi"
+          ? { parts: ledgerParts(sg, meetingId), ...(sg.chair && sg.chair.length ? { chair: ledgerChair(sg) } : {}) }
+          : sg.ledger
           ? { questions: ledgerQuestions(sg), ...(sg.chair && sg.chair.length ? { chair: ledgerChair(sg) } : {}) }
           : sg.topics && sg.topics.length ? { topics: sg.topics.map(({ n, title, theme, src }) => ({ n, title, theme, src: src === "bulletin" ? "議会だより" : "会議録の答弁から推定" })) } : {}),
         preview: (entries.find((e) => e._nName === nMember)?.text || "").slice(0, 80),
@@ -786,7 +878,7 @@ const TOOLS = [
       const out = [];
       let used = 0;
       let k = offset;
-      const tk = b._seg ? (b._seg.ledger ? ledgerTurnKinds(b._seg) : turnKinds(b._seg)) : new Map();
+      const tk = b._seg ? (b._seg.ledger ? (b._seg.kind === "shitsugi" ? shitsugiTurnKinds(b._seg) : ledgerTurnKinds(b._seg)) : turnKinds(b._seg)) : new Map();
       for (; k < b._entries.length; k++) {
         const e = b._entries[k];
         if (used + e.text.length > max_chars && out.length > 0) break;
@@ -802,14 +894,18 @@ const TOOLS = [
         ...(b.scene ? { scene: b.scene } : {}),
         ...(b.style ? { style: b.style } : {}),
         ...(b.structure ? { structure: b.structure } : {}),
+        ...(b.answerer ? { answerer: b.answerer } : {}),
         ...(b.questions ? { questions: b.questions } : {}),
+        ...(b.parts ? { parts: b.parts } : {}),
         ...(b.chair ? { chair: b.chair } : {}),
         ...(b.topics ? { topics: b.topics } : {}),
         total_speeches: b._entries.length,
         returned: { from: offset, to: k - 1 },
         truncated: k < b._entries.length ? { next_offset: k } : undefined,
         exchange: out,
-        note: (b._seg && b._seg.ledger
+        note: (b._seg && b._seg.ledger && b._seg.kind === "shitsugi"
+          ? "範囲は会議録の議長の進行から機械抽出したもの。議案ごとの発言（質疑・再質疑・再々質疑・意見・要望など）と答弁の結びつきは、人が確認した質疑の台帳による（conf は台帳の確信）。"
+          : b._seg && b._seg.ledger
           ? "範囲は会議録の議長の進行から機械抽出したもの。問いの区切り・発言の種類（質問・再質問・再々質問・要望など）・方式・題は、人が確認した一般質問の台帳による（conf は台帳の確信）。"
           : b._seg
             ? "範囲とターン種別（質問・再質問・答弁）は会議録の議長の進行から機械抽出したものです（推定）。"
@@ -870,7 +966,13 @@ const TOOLS = [
           const own = IDX.slice(sg._a, sg._b + 1).filter((e) => !/議長$/.test(e.role || ""));
           const base = { meeting: mName, date: sg.date, pdf: first.pdf, sid: sg.kind === "vote" ? sg.sid : sg.from };
           if (sg.kind === "vote") steps.採決.push({ ...base, result: sg.result, method: sg.method || undefined, basis: sg.basis || undefined, excerpt: excerpt(first), also_voted_together: sg.bills.length > 1 ? sg.bills.filter((b) => b !== no) : undefined });
-          else if (sg.kind === "shitsugi") steps.議案質疑.push({ ...base, member: sg.member, seat: sg.seat || undefined, speeches: own.length, first_question: own[0] ? excerpt(own[0]) : undefined, note: "1回の質疑で複数議案に触れることが多い。全文は get_exchange(meetingId, member)。" });
+          else if (sg.kind === "shitsugi" && sg.ledger) {
+            // 質疑の台帳：この議案の行の発言と答弁だけを返す（bills は台帳の bill）
+            const pt = ledgerParts(sg, id).find((x) => x.bill === no);
+            const st = pt && pt.start ? IDX.slice(sg._a, sg._b + 1).find((e) => e.sid === pt.start.sid) : null;
+            steps.議案質疑.push({ ...base, member: sg.member, seat: sg.seat || undefined, structure: "台帳", ...(pt ? { turns: pt.turns, answers: pt.answers, conf: pt.conf, start: pt.start } : {}), first_question: st ? excerpt(st) : undefined, other_bills: sg.bills.length > 1 ? sg.bills.filter((b) => b !== no) : undefined, note: "この議案への発言と答弁は人が確認した質疑の台帳による。first_question は質疑が始まる発言の冒頭（start の段落からとは限らない）。全文は get_exchange(meetingId, member)。" });
+          }
+          else if (sg.kind === "shitsugi") steps.議案質疑.push({ ...base, member: sg.member, seat: sg.seat || undefined, structure: "推定", speeches: own.length, first_question: own[0] ? excerpt(own[0]) : undefined, note: "1回の質疑で複数議案に触れることが多い（対象の議案は機械の推定）。全文は get_exchange(meetingId, member)。" });
           else steps[SCENE[sg.kind]].push({ ...base, member: sg.member, role: sg.role || sg.seat || undefined, committee: sg.committee || undefined, stance: sg.stance || undefined, excerpt: own[0] ? excerpt(own[0]) : undefined });
         }
       }
