@@ -1,12 +1,12 @@
 {
   "schema": 1,
-  "generated": "2026-10-10",
-  "total": 31263,
+  "generated": "2026-11-02",
+  "total": 32246,
   "shards": [
     {
       "year": 2026,
       "file": "index/2026.json",
-      "count": 1192
+      "count": 2175
     },
     {
       "year": 2025,

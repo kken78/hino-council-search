@@ -1,5 +1,67 @@
 [
   {
+    "id": "0000009023",
+    "name": "令和8年7月臨時会議",
+    "year": 2026,
+    "era": "令和8年",
+    "type": "臨時会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000009023.html",
+    "indexed": true,
+    "pdfs": [
+      {
+        "label": "目次(PDFサイズ：45.64KB)",
+        "date": "2026-07-27",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000009/9023/20260727mokuji.pdf"
+      },
+      {
+        "label": "本文(PDFサイズ：308.07KB)",
+        "date": "2026-07-27",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000009/9023/20260727kaigiroku.pdf"
+      }
+    ]
+  },
+  {
+    "id": "0000009022",
+    "name": "令和8年6月定例会議",
+    "year": 2026,
+    "era": "令和8年",
+    "type": "定例会",
+    "url": "https://www.town.shiga-hino.lg.jp/0000009022.html",
+    "indexed": true,
+    "pdfs": [
+      {
+        "label": "目次(PDFサイズ：160.11KB)",
+        "date": null,
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000009/9022/8.6tmokiji.pdf"
+      },
+      {
+        "label": "第1日(6月1日)(PDFサイズ：392.74KB)",
+        "date": "2026-06-01",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000009/9022/20260601kaigiroku.pdf"
+      },
+      {
+        "label": "第2日(6月11日)(PDFサイズ：976.04KB)",
+        "date": "2026-06-11",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000009/9022/20260611kaigiroku.pdf"
+      },
+      {
+        "label": "第3日(6月12日)(PDFサイズ：960.82KB)",
+        "date": "2026-06-12",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000009/9022/20260612kaigiroku.pdf"
+      },
+      {
+        "label": "第4日(6月15日)(PDFサイズ：608.51KB)",
+        "date": "2026-06-15",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000009/9022/20260615kaigiroku.pdf"
+      },
+      {
+        "label": "第5日(6月24日)(PDFサイズ：564.98KB)",
+        "date": "2026-06-24",
+        "url": "https://www.town.shiga-hino.lg.jp/cmsfiles/contents/0000009/9022/20260624kaigiroku.pdf"
+      }
+    ]
+  },
+  {
     "id": "0000008943",
     "name": "令和8年5月臨時会議",
     "year": 2026,
