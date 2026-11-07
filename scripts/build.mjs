@@ -9,6 +9,7 @@ import { textKey } from "./lib/keys.mjs";
 import { buildNormStr } from "./lib/normalize.mjs";
 import { readIndex, writeIndex } from "./lib/data.mjs";
 import { SITE, applySite } from "./lib/site.mjs";
+import { inlineLabels } from "./lib/labels.mjs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const R = (p) => readFileSync(join(root, p), "utf8");
@@ -50,9 +51,9 @@ const TITLE = applySite("{{TITLE}}"), OFFLINE = (SITE.ui && SITE.ui.offline_file
 const shape = (t) => t.replace(/<div class="note">[\s\S]*?<\/div>\n/, "")
          .replace(/ <span style="font-size:12px;color:#9fb0c6">（プレビュー）<\/span>/, "")
          .replace(`<title>${TITLE}（プレビュー）</title>`, `<title>${TITLE}</title>`);
-const tpl = shape(applySite(R("scripts/preview.tpl.html")));
+const tpl = shape(inlineLabels(applySite(R("scripts/preview.tpl.html"))));
 // オンライン版だけ OGP のタグを入れる（site.config.json の ui.ogp。無ければ tpl と同じ）
-const tplOnline = shape(applySite(R("scripts/preview.tpl.html"), { ogp: true }));
+const tplOnline = shape(inlineLabels(applySite(R("scripts/preview.tpl.html"), { ogp: true })));
 
 // 1) オフライン配布用：全データ埋め込み
 const allData = { ...big, ...small, proceedings };
