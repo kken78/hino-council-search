@@ -3,8 +3,18 @@
 // 発言マーカー：「役職／番号（氏名君）」。全角括弧。役職に空白・記号は含めない。
 // 敬称（日野町は「君」）は site.config.json の speech.honorific で変えられる（例：「議員」「さん」）。
 import { SITE } from "./site.mjs";
+import { PARA } from "./pagetext.mjs";
+
+// 段落の印を除く。目次の解析・議案の抽出・名簿の読み取りは、印の無い文字で行う。
+export const stripPara = (s) => String(s || "").split(PARA).join("");
+// 発言の text：ページの境目の改行を除き、段落の印を改行に替える。先頭と末尾の改行は除き、続く改行は1つにする。
+// 改行を全部除くと、段落の印を入れる前の text と同じになる。
+export const speechText = (t) =>
+  String(t || "").replace(/\n/g, "").split(PARA).join("\n").replace(/\n{2,}/g, "\n").replace(/^\n+|\n+$/g, "");
+
 const HON = ((SITE.speech && SITE.speech.honorific) ?? "君").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const SPK = new RegExp(`([^\\s　\\n、。「」（）]{1,16})（([^（）\\n]{1,14})${HON}）`, "g");
+// 段落の印 U+2029（scripts/lib/pagetext.mjs）はまたがない（役職の \s が U+2029 を含む。氏名は明示して除く）。
+const SPK = new RegExp(`([^\\s　\\n、。「」（）]{1,16})（([^（）\\n\\u2029]{1,14})${HON}）`, "g");
 
 const clean = (s) => {
   let r = s.replace(/[\s　]/g, "").trim();
@@ -48,7 +58,7 @@ export function stripPageHeads(raw) {
   return out.join("\n");
 }
 
-// 本文を発言単位へ分割。各要素 {role, name, text}。
+// 本文を発言単位へ分割。各要素 {role, name, text}。段落の印は text に残る（index.mjs で改行に替える）。
 export function splitSpeeches(raw) {
   const marks = [];
   let m;
@@ -105,6 +115,7 @@ export const stripTocPageNo = (s) =>
 export function extractGianFromToc(tocRaw) {
   const map = {};
   if (!tocRaw) return map;
+  tocRaw = stripPara(tocRaw);
   const items = tocRaw.split(/(?=１．)/);
   for (let seg of items) {
     seg = seg.replace(/[\r\n]+/g, "");
@@ -141,7 +152,7 @@ export function extractGianFromToc(tocRaw) {
 // 議事日程の見出しから議案を抽出。{no, kind, title}[]。
 export function extractGian(raw) {
   // 改行を除去して件名が行で途切れないようにし、議事日程（「会議の概要」前）を対象にする。
-  const flat = raw.replace(/[\r\n]+/g, "");
+  const flat = stripPara(raw).replace(/[\r\n]+/g, "");
   const head = flat.split(/会議の概要/)[0] || flat.slice(0, 8000);
   const items = new Map();
   // 番号＋件名（次の 〃 / 日程第 / 別の議案番号 / 会議の概要 まで）

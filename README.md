@@ -273,6 +273,7 @@ gikai-search/
   }
 ]
 ```
+> `text` の改行は段落の区切り（PDF の段落の最初の行の字下げによる。`scripts/lib/pagetext.mjs`）。改行を除くと、区切りを入れる前の `text` と同じになる。段落の区切りを入れる前に取り出したテキスト（`data/text/`）から作った発言には改行が無い。
 > `norm` は `build.mjs`／`build-preview.mjs` が配布物へ書き出す際に `buildNormStr(text)` で付与する。リポジトリの `public/data/index.json` は `norm` 無しで軽量に保つ。フロントは `norm` があればそれを使い、無ければ起動時に一度だけ生成する。
 
 ### gian.json（議案メタ）
@@ -434,6 +435,7 @@ const clean = (s) => s.replace(/[\s\u3000]/g, "");
 ```
 
 ### 5.4 index.mjs（索引生成）
+抽出テキストは1行＝1ページで、段落の最初の行の前に印 U+2029 がある（`extract.mjs`）。議事日程・目次・名簿は印を除いてから読み、発言の `text` では印を改行に替える。
 各会議の抽出テキストを発言分割し、メタ（会議・種別・年・元号・発言者・議案参照など）を付けて `index.json` を生成。議案は議事日程・目次から抽出して `gian.json` に、一般質問者も推定して格納。`toc.json` の `indexed` フラグも更新する。
 > `norm` はここでは付けず（リポジトリの `index.json` を軽量に保つため）、配布物を作る `build.mjs`／`build-preview.mjs` 側で `buildNormStr` により注入する。全件を常時埋め込みたい場合は `index.mjs` で `rec.norm = buildNormStr(rec.text)` を付ける運用も可。
 
@@ -603,6 +605,8 @@ npm run build       # dist/日野町議会-会議録検索.html（オフライ�
 ```
 
 主な環境変数
+- `HINO_REFRESH=1` … `npm run extract` で、`data/text/` にあるものも含めて全件を作り直す。`data/pdf/<キー>.pdf` があればそれを使い、無いものだけ取得する（取得は1件ごとに1秒あける）。
+  作り直したあとは `npm run index` を動かし、`node scripts/check-sid-stability.mjs HEAD` で発言ID が変わっていないことを確かめる。
 - `HINO_PDF_ONLINE=1` … preview.html のPDFリンクをローカル化せずURLのままにする。
 - `HINO_PDF_DIR=名前` … ローカルPDFフォルダ名（既定 `議事録本体`）。`fetch-pdfs.mjs` と揃える。
 - `HINO_HL_NOAI=1` / `HINO_HL_MODEL` / `HINO_HL_TOP` … 注目テーマ生成の制御。
