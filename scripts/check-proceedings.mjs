@@ -1,5 +1,6 @@
 // check-proceedings.mjs — 審議構造（proceedings.json）の精度レポート。index.mjs の後に実行する。
-//   ・一般質問：目次PDFに載る質問者と、検出した一般質問の一致
+//   ・一般質問：目次PDFに載る質問者と、検出した一般質問の一致（台帳のある区切りと問いの数）
+//   ・議案質疑：台帳のある区切りと行の数
 //   ・採決：議案（報第＝報告は採決なしなので除く）のうち採決結果が取れた割合
 //   ・未分類：議長・会議録情報以外の発言のうち、どの場面にも入らなかった割合
 // 使い方: node scripts/check-proceedings.mjs [--verbose]
@@ -71,6 +72,10 @@ const pct = (a, b) => (b ? ((100 * a) / b).toFixed(1) + "%" : "-");
 const ipSegs = Object.values(proc).flatMap((p) => p.segments).filter((s) => s.kind === "ippan");
 const ledSegs = ipSegs.filter((s) => s.ledger);
 console.log(`一般質問：目次の質問者 ${tIp} 名中 ${tIpOk} 名を検出（${pct(tIpOk, tIp)}）／区切り ${ipSegs.length} のうち台帳あり ${ledSegs.length}・問い ${ledSegs.reduce((n, s) => n + (s.questions || []).length, 0)}`);
+// 質疑の台帳（data/shitsugi.tsv）を通した区切りと行の数（index.mjs が parts を足したもの）
+const sgSegs = Object.values(proc).flatMap((p) => p.segments).filter((s) => s.kind === "shitsugi");
+const sgLed = sgSegs.filter((s) => s.ledger);
+console.log(`議案質疑：区切り ${sgSegs.length} のうち台帳あり ${sgLed.length}・行 ${sgLed.reduce((n, s) => n + (s.parts || []).length, 0)}`);
 console.log(`採決結果：議案（報第を除く）${tBills} 件中 ${tVoted} 件で取得（${pct(tVoted, tBills)}）`);
 console.log(`場面の分類：議長以外の発言 ${tSp} 件中 ${tCovered} 件をいずれかの場面に分類（${pct(tCovered, tSp)}）`);
 // 公開データのファイルサイズ（GitHub は 50MB で警告、100MB で拒否）
