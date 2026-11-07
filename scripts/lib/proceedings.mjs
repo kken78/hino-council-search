@@ -162,7 +162,7 @@ const SCENE_KIND = { ippan: "ippan", shitsugi: "shitsugi", reportqa: "shitsugi",
 
 export function parseDay(speeches, { date = null, pdf = null, agenda = [] } = {}) {
   const segs = [];
-  let scene = null, cur = null, call = null, ctxBills = [], qn = 0, aside = undefined;
+  let scene = null, cur = null, call = null, ctxBills = [], qn = 0, aside = undefined, answerCall = false;
 
   const close = () => {
     if (cur && cur.turns.length) segs.push(cur);
@@ -207,11 +207,22 @@ export function parseDay(speeches, { date = null, pdf = null, agenda = [] } = {}
       // 委員会名：指名の直前「総務常任委員長 12番、X君」か、「決算特別委員長より審査結果の報告を求めます」
       const cm = c && c[1] ? c[1] : (t.match(/([一-龥々]{2,14})委員長(?:より|から|の)/) || [])[1];
       call = c ? { seat: toHalf(c[2]) + "番", name: c[3], committee: normCommittee(cm) } : null;
+      // 質疑の中で議長が委員長・提出者（議員）に答弁を求めたとき：次の議員の発言は答弁（新しい区切りにしない）
+      answerCall = !!(cur && cur.kind === "shitsugi" && /委員長|提出者/.test(t) && (/答弁/.test(t) || /(委員長|提出者)。?$/.test(t) || (c && c[1])));
       continue;
     }
     if (!scene) continue;
     const kind = SCENE_KIND[scene];
+    if (isSeat(sp.role) && kind === "shitsugi" && cur && cur.kind === "shitsugi" && cur.member !== sp.name && (answerCall || cur.answerer === sp.name)) {
+      // 委員長・提出者としての答弁（議員が答える）
+      cur.answerer = sp.name;
+      push(sp, "a");
+      answerCall = false;
+      call = null;
+      continue;
+    }
     if (isSeat(sp.role)) {
+      answerCall = false;
       const same = cur && cur.kind === kind && cur.member === sp.name;
       const called = call && call.name.replace(/[\s　]/g, "") === sp.name;
       if (!same || (called && kind !== "ippan" && kind !== "shitsugi")) open(kind, sp);
