@@ -8,6 +8,7 @@ import { textKey, isTocPdf } from "./lib/keys.mjs";
 import { dateFromName } from "./lib/dates.mjs";
 import { parseDay } from "./lib/proceedings.mjs";
 import { writeIndex } from "./lib/data.mjs";
+import { readLedger, applyLedger } from "./lib/ledger.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA = join(__dirname, "../public/data");
@@ -53,6 +54,8 @@ function detectIppan(raw) {
 
 function run() {
   const meetings = JSON.parse(readFileSync(MEET, "utf8"));
+  const ledger = readLedger(); // 一般質問の台帳（人が確認したもの。README「一般質問の構造の決まり」）
+  let ledgerSegs = 0, ledgerQs = 0;
   const index = [];
   const gian = {};
   const proceedings = {};
@@ -123,6 +126,8 @@ function run() {
     });
     // 審議構造（一般質問・議案質疑・委員長報告・討論・提案説明・採決）。gian には任意項目として要約を足す（既存項目は不変）。
     const segments = days.flatMap(({ date, day }) => parseDay(day, { date, agenda }));
+    // 一般質問の区切りに台帳があれば、問いごとの構造（questions）・議長の注意（chair）を足し、方式と題を台帳から作る
+    for (const s of segments) if (s.kind === "ippan" && applyLedger(s, ledger)) { ledgerSegs++; ledgerQs += s.questions.length; }
     if (segments.length) proceedings[m.id] = { segments };
     const byNo = new Map(agenda.map((a) => [a.no, a]));
     for (const s of segments) {
@@ -176,6 +181,7 @@ function run() {
   const segs = Object.values(proceedings).flatMap((p) => p.segments);
   const cnt = (k) => segs.filter((s) => s.kind === k).length;
   console.log(`proceedings.json: 一般質問 ${cnt("ippan")} / 議案質疑 ${cnt("shitsugi")} / 委員長報告 ${cnt("report")} / 討論 ${cnt("debate")} / 提案説明 ${cnt("proposal")} / 採決 ${cnt("vote")}`);
+  console.log(`  一般質問の台帳：${ledgerSegs} 区切り・${ledgerQs} 問（台帳の無い区切り ${cnt("ippan") - ledgerSegs}）`);
   console.log(`gian.json : 議案 ${Object.values(gian).reduce((s,g)=>s+g.agenda.length,0)} 件 / 一般質問者 ${Object.values(gian).reduce((s,g)=>s+g.ippan.length,0)} 名`);
 }
 run();
