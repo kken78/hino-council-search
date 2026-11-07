@@ -9,6 +9,9 @@
 
 ## 更新履歴
 
+### 2026-11-07（質疑の台帳）
+- 議案質疑の議案ごとの発言・回・答弁を、人が確認した台帳（`data/shitsugi.tsv` 1,103行・`data/shitsugi-chair.tsv` 8行。520区切りの全件確認による）から作るようにした。`proceedings.json` の質疑の区切りに `parts`・`chair`・`ledger` を足し、`bills` を台帳の議案にそろえた。やりとりの表示と MCP（v0.6.0）は台帳の種類と議案から見出しを付ける。台帳の検査は `npm run check:ledger`、台帳に無い区切りの下書きは `npm run ledger:draft -- --kind shitsugi`。決まりは「4. データスキーマ」の「質疑の構造の決まり」。
+
 ### 2026-11-07（一般質問の台帳）
 - 一般質問の問いの境目・回・方式・題を、人が確認した台帳（`data/ippan.tsv` 964行・`data/ippan-chair.tsv` 18行。467区切りの全件確認による）から作るようにした。`proceedings.json` の一般質問の区切りに `questions`・`chair`・`ledger` を足し、やりとりの表示と MCP（v0.5.0）は台帳の種類から見出しを付ける。台帳の検査は `npm run check:ledger`、台帳に無い区切りの下書きは `npm run ledger:draft`。決まりは「4. データスキーマ」の「一般質問の構造の決まり」。
 
@@ -47,6 +50,7 @@
 - 会議ページ導線：会議録一覧の「会議ページ↗」は「本会議のご案内」の各会議ページへ（本番のみ表示）。
 - 単体プレビュー：`preview.html`（索引データ内蔵・サーバ不要で開ける挙動確認用。`scripts/build-preview.mjs` で再生成）。
 - 一般質問の台帳：467区切り・964問のすべてについて、問いの境目・発言の種類・方式・題を人が確認した台帳（`data/ippan.tsv`・`data/ippan-chair.tsv`）を持ち、画面と MCP はこれから作る。機械の推定は、台帳に無い区切りの下書き（`npm run ledger:draft`）にだけ使う。
+- 質疑の台帳：520区切り・1,103行のすべてについて、議案ごとの発言・回・答弁を人が確認した台帳（`data/shitsugi.tsv`・`data/shitsugi-chair.tsv`）を持ち、画面と MCP はこれから作る。機械の推定は、台帳に無い区切りの下書き（`npm run ledger:draft -- --kind shitsugi`）にだけ使う。
 
 **データ状況（本番・フル取り込み済み）**
 - 目次カタログ：**66会議（2017〜2026）**。
@@ -180,8 +184,8 @@ gikai-search/
 │  ├─ index.mjs          # 発言分割・議案抽出・審議構造 → index/gian/proceedings、toc更新
 │  ├─ link-bulletin.mjs  # 議会だより(council-dashboard)の一般質問見出しを proceedings/gian へ結びつけ
 │  ├─ check-proceedings.mjs # 審議構造の精度レポート（＋公開データのファイルサイズ）
-│  ├─ check-ledger.mjs   # 一般質問の台帳の検査（npm run check:ledger）
-│  ├─ ledger-draft.mjs   # 台帳に無い一般質問の区切りの下書き（npm run ledger:draft）
+│  ├─ check-ledger.mjs   # 一般質問と質疑の台帳の検査（npm run check:ledger）
+│  ├─ ledger-draft.mjs   # 台帳に無い一般質問・質疑の区切りの下書き（npm run ledger:draft。質疑は -- --kind shitsugi）
 │  ├─ test/              # 解析器の回帰テスト（npm test）
 │  ├─ enrich.mjs         # 任意（Claude：要約・分類）
 │  ├─ embed.mjs          # 任意（埋め込み）
@@ -195,8 +199,8 @@ gikai-search/
 │     ├─ eras.mjs        # 元号⇔西暦・漢数字
 │     ├─ speech.mjs      # 発言分割・議案抽出・区分推定・ページ番号除去
 │     ├─ proceedings.mjs # 審議構造（一般質問・質疑・委員長報告・討論・採決）の解析
-│     ├─ ledger.mjs      # 一般質問の台帳の読み取りと、区切りへの通し方
-│     ├─ labels.mjs      # 一般質問の発言の見出し（画面に埋め込み、MCP は写しを持つ）
+│     ├─ ledger.mjs      # 一般質問と質疑の台帳の読み取りと、区切りへの通し方
+│     ├─ labels.mjs      # 一般質問と質疑の発言の見出し（画面に埋め込み、MCP は写しを持つ）
 │     ├─ data.mjs        # 発言索引の読み書き（年別ファイル＋目録。分割前の index.json も読める）
 │     ├─ site.mjs        # site.config.json の読み込み・テンプレートへの差し込み
 │     ├─ keys.mjs        # テキストキャッシュのキー生成
@@ -207,6 +211,8 @@ gikai-search/
 ├─ data/                                   # 中間生成物（.gitignore: pdf/ と cache/。text/ はコミット可）
 │  ├─ ippan.tsv          # 一般質問の台帳（人が確認したもの。1行＝1つの問い）
 │  ├─ ippan-chair.tsv    # 一般質問の議長の注意（回数・通告外）
+│  ├─ shitsugi.tsv       # 質疑の台帳（人が確認したもの。1行＝1人の議員の1つの議案への質疑）
+│  ├─ shitsugi-chair.tsv # 質疑の議長の注意（回数・範囲）
 │  ├─ pdf/               # ダウンロードPDF（キャッシュ・.gitignore）
 │  ├─ text/              # 抽出テキスト（コミット可）
 │  └─ cache/             # offline用ページキャッシュ（.gitignore）
@@ -337,7 +343,14 @@ gikai-search/
 > - `topics`（台帳の無い区切り）：`src:"minutes"` は答弁冒頭（「〇〇についてご質問を頂きました」）からの推定、`src:"bulletin"` は議会だより（council-dashboard）の見出しと11分類（`link-bulletin.mjs` が付与）。
 > - `qalign`：議会だよりの各質問が始まる議員発言 `[[質問番号, from からの相対位置], …]`。台帳のある区切りでは、議会だよりの問いと同じ題の台帳の問いの `start` から作る（全問そろう）。台帳の無い区切りでは `link-bulletin.mjs` が題名・問の本文と発言の文字の重なりで推定する（確信度の低い質問は含めない）。全質問がそろう一般質問では、やりとり表示・MCP の「質問／再質問」の番号をこれに合わせる。議会だよりダッシュボードの「会議録のやりとりを見る」も、この位置を強調して開く。
 > - `stance`：討論で本人が表明した立場（反対／賛成）。「委員長報告の不採択に反対」のような場合も表明どおり記録する。
-> - 精度は `node scripts/check-proceedings.mjs` で確認（目次の一般質問者との一致、台帳のある区切りと問いの数、採決結果の取得率、場面に分類できた発言の割合）。
+> - `parts`・`chair`・`ledger`（議案質疑）：質疑の台帳（`data/shitsugi.tsv`・`data/shitsugi-chair.tsv`）のある区切りにだけ付く（index.mjs が足す）。台帳のある区切りの `bills` は、台帳の bill のうち `議題外`・`不明` を除いたもの（台帳の順。機械の値は使わない）。`turns`（機械）は台帳があっても残す。
+>   ```jsonc
+>   "parts": [ { "bill": "議第85号", "start": [0, 1], "turns": [[0, 1, "q"], [6, 3, "rq"], [12, "", "req"]], "answers": [2, 8], "conf": "高" }, … ],
+>   "chair": [[1, "notice"]],
+>   "ledger": true
+>   ```
+>   1つの要素が台帳の1行（1つの議案への質疑）。位置は from からの相対位置。`start` は `[相対位置, 段落の番号]`、`turns` は `[相対位置, 段落の番号（空なら ""）, 種類]`、`answers` は答弁の相対位置。1つの発言が複数の議案にまたがるときは、同じ相対位置が複数の要素の `turns` に出る。列の意味は下の「data/shitsugi.tsv」。`note` は入れない（台帳にある）。
+> - 精度は `node scripts/check-proceedings.mjs` で確認（目次の一般質問者との一致、台帳のある区切りと問いの数、議案質疑の台帳のある区切りと行の数、採決結果の取得率、場面に分類できた発言の割合）。
 
 ### data/ippan.tsv（一般質問の台帳）
 
@@ -387,6 +400,50 @@ gikai-search/
    5. `npm run index`（台帳を proceedings.json に通す）。続けて `npm run link-bulletin`・`npm run highlights`・`npm run check`
 
 台帳の無い区切りは、画面に「構造は機械の推定です」と出し、MCP は `structure: "推定"` を付けて返す。
+
+### data/shitsugi.tsv（質疑の台帳）
+
+見出し行つきの TSV。1行が1人の議員の1つの議案への質疑。人が確認したもので、質疑の議案ごとの発言・回・答弁はこれを正とする（道具で書き換えない）。
+
+| 列 | 中身 |
+|---|---|
+| from | 区切りの最初の発言の sid（proceedings.json の質疑の区切りの `from` と同じ） |
+| member | 議員名 |
+| date | 日付 |
+| bill | 議案の番号（`議第85号`・`報第5号`・`決議案第5号` の形。gian.json の議案と同じ書き方）。`議題外`（議題の議案に無いことを聞いた）、`不明`（1つの議案に決められない）もある |
+| start | この議案への質疑が始まる発言と段落 `sid:段落番号`（段落は1から） |
+| turns | この議案への議員の発言を順に `sid:段落番号:種類` を `;` でつないだもの。段落番号はその発言の中でこの議案の部分が始まる段落（空のことがある）。種類は `q`＝質疑、`rq`＝再質疑、`rrq`＝再々質疑、`q4`＝4回目（いまは無い）、`req`＝意見・要望（回に数えない）、`x`＝回に数えない発言（確認・答弁漏れの指摘・言い直し） |
+| answers | この議案への答弁の sid を `;` でつないだもの（当局の発言。委員長報告への質疑では委員長である議員の発言）。読み手が分からなかったものは空 |
+| conf | 確信 `高`／`中`／`低`（下書きは `下書き`。台帳に足す前に直す） |
+| note | 判定の根拠と迷い |
+
+- 1つの発言が複数の議案にまたがるとき、その sid は複数の行の turns に出る（段落番号で境目を示す）。1つの発言の中で同じ議案の部分が2つに分かれるときは、同じ行の turns に同じ sid が段落を変えて2回出る。
+- 区切りの中の議員の発言は、すべてその区切りの行のどれかの turns に入っているか、区切りの `answerer`（委員長・提出者としての答弁をした議員）の発言である。区切りの外の sid は入らない。
+- 回は議案ごとに数える（同じ行の中で q → rq → rrq）。
+- 議長の発言は台帳に無い。
+
+### data/shitsugi-chair.tsv（質疑の議長の注意）
+
+見出し行つきの TSV。列は `sid`（議長の発言）、`kind`（`rounds`＝回数の注意、`notice`＝範囲の注意）、`about`（その区切りの from）、`text`（発言の頭80字）。
+
+### 質疑の構造の決まり
+
+2026-11-07 に決めたもの。台帳（`data/shitsugi.tsv`・`data/shitsugi-chair.tsv`）はこの決まりで作る。
+
+1. 質疑は議案ごと。1回の発言で複数の議案を聞くことがあり、議案ごとに行を分け、段落で境目を示す。
+2. 回は議案ごとに発言の順で数える（質疑→再質疑→再々質疑）。議員の言い回しは使わない。確認・答弁漏れの指摘・言い直しは回に数えない（`x`）。
+3. 問いの無い発言（要望・礼・「答弁は結構」、答弁の無い最後の発言）は意見・要望（`req`）で、回に数えない。
+4. 議員が番号を言わないときは、議題の議案の名前と中身から決め、確信を「中」にする。議題の議案に無いことを聞いたものは「議題外」、1つの議案に決められないものは「不明」として持つ。
+5. 議長の注意は範囲と回数だけを記録する。
+6. 委員長・提出者（議員）への質疑では、その議員の発言は答弁（区切りの `answerer`）。
+7. 台帳は人が確認したものを正とし、道具は台帳に無い区切りの下書きを作る。手順は一般質問と同じ。
+   1. `npm run index`（会議録から区切りを作る。台帳に無い区切りは機械の値のまま）
+   2. `npm run ledger:draft -- --kind shitsugi --out <ファイル>`（台帳に無い区切りの下書き。機械の bills ごとに1行、取れなければ `不明`。conf は `下書き`）
+   3. 人が下書きを確かめ、議案ごとに発言と段落を分け、conf を `高`／`中`／`低` にして、`data/shitsugi.tsv` に足す（議長の注意は `data/shitsugi-chair.tsv` に足す）
+   4. `npm run check:ledger`（台帳の検査。問題があれば件数と該当を出して終了コード 1。台帳の無い区切りは「下書き待ち」として数える。bill が gian.json のその会議の議案に無いものは件数と一覧を出す（前の会議の議案のことがあるので、エラーにはしない））
+   5. `npm run index`（台帳を proceedings.json に通す）。続けて `npm run link-bulletin`・`npm run highlights`・`npm run check`
+
+画面のやりとりの表示では、議員の発言の見出しを台帳の種類と議案で付ける（「質疑（議第85号）」「再質疑（議第85号）」「意見・要望」「（回に数えない発言）」。1つの発言が複数の議案にまたがるときは「質疑（議第83号 p1／議第88号 p3）」）。答弁には台帳で結びついた議案を添える（「答弁（議第85号）」）。「対象の議案」の箱には台帳の議案を並べ、`議題外`・`不明` の行は「議題に無い事柄」「議案を決められない質疑」と出す。台帳の無い区切りは、画面に「構造は機械の推定です」と出し、MCP は `structure: "推定"` を付けて返す。
 
 ### toc.json（年度別カタログ／全会議の目次）
 ```json
@@ -656,7 +713,7 @@ npm run crawl       # public/data/meetings.json
 npm run extract     # data/text/*.txt（PDFキャッシュ）
 npm run index       # public/data/index/<年>.json＋index-manifest.json, gian.json, proceedings.json（一般質問の台帳 data/ippan.tsv を通す）
 npm run link-bulletin  # 議会だよりの見出し・分類を一般質問へ結びつける（要ネット）
-npm run check:ledger   # 一般質問の台帳の検査（台帳に無い区切りがあれば npm run ledger:draft で下書きを作る。「一般質問の構造の決まり」）
+npm run check:ledger   # 一般質問と質疑の台帳の検査（台帳に無い区切りがあれば npm run ledger:draft で下書きを作る。「一般質問の構造の決まり」「質疑の構造の決まり」）
 
 # 2) 任意：注目テーマ・AI付与・埋め込み・会議ページ対応表
 node scripts/highlights.mjs        # public/data/highlights.json（要 ANTHROPIC_API_KEY／無ければフォールバック）
