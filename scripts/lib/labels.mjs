@@ -1,4 +1,4 @@
-// labels.mjs — 一般質問の台帳（proceedings.json の questions・chair）から、発言ごとの見出しを作る。
+// labels.mjs — 一般質問の台帳（proceedings.json の questions・chair）と質疑の台帳（parts・chair）から、発言ごとの見出しを作る。
 //   画面（scripts/preview.tpl.html）と MCP（mcp/hino-council-mcp.mjs）で同じ見出しを使う。
 //   画面には build.mjs・build-preview.mjs が「__LABELS_BEGIN__」から「__LABELS_END__」までを埋め込む（export を外して）。
 //   MCP は単一ファイルで動かすため、同じ範囲の写しを持つ。2つが同じことは scripts/test/labels.test.mjs で確かめる。
@@ -64,9 +64,66 @@ export function ledgerTurnLabels(sg) {
   return m;
 }
 
-// 区切り → Map<from からの相対位置, 議長の注意の印>
+// 区切り → Map<from からの相対位置, 議長の注意の印>（質疑では notice は範囲の注意）
 export function chairLabels(sg) {
-  return new Map((sg.chair || []).map(([off, kind]) => [off, CHAIR_LABEL[kind] || kind]));
+  const L = sg.kind === "shitsugi" ? SHITSUGI_CHAIR_LABEL : CHAIR_LABEL;
+  return new Map((sg.chair || []).map(([off, kind]) => [off, L[kind] || kind]));
+}
+
+// ---- 質疑の台帳（parts）の見出し ----
+// 台帳の発言の種類 → 見出しの名前（質疑）
+export const SHITSUGI_TURN_NAME = { q: "質疑", rq: "再質疑", rrq: "再々質疑", q4: "4回目の質疑", req: "意見・要望", x: "回に数えない発言" };
+export const SHITSUGI_CHAIR_LABEL = { rounds: "議長：回数の注意", notice: "議長：範囲の注意" };
+// bill の特別な値 → 「対象の議案」の箱での名前と、見出しでの名前
+export const BILL_BOX_NAME = { "議題外": "議題に無い事柄", "不明": "議案を決められない質疑" };
+export const BILL_SHORT_NAME = { "議題外": "議題外", "不明": "議案不明" };
+export function billShort(b) {
+  return BILL_SHORT_NAME[b] || b;
+}
+
+// 1つの発言の見出し（質疑）。parts は [{ bill, p, kind }]（段落の順）
+//   同じ種類が続く部分は1つにまとめ、議案を「／」で並べる。部分が2つ以上なら段落（p）を添える。
+//   発言の全部が意見・要望（または回に数えない発言）なら議案を添えない。
+export function shitsugiPartLabel(parts) {
+  const multi = parts.length >= 2;
+  if (parts.every((x) => x.kind === "req")) return SHITSUGI_TURN_NAME.req;
+  if (parts.every((x) => x.kind === "x")) return "（" + SHITSUGI_TURN_NAME.x + "）";
+  const groups = [];
+  for (const x of parts) {
+    const g = groups[groups.length - 1];
+    if (g && g.kind === x.kind) g.items.push(x);
+    else groups.push({ kind: x.kind, items: [x] });
+  }
+  return groups.map((g) => (SHITSUGI_TURN_NAME[g.kind] || g.kind) + "（" + g.items.map((x) => billShort(x.bill) + (multi && x.p ? " p" + x.p : "")).join("／") + "）").join("／");
+}
+
+// 区切り（質疑の台帳のあるもの）→ Map<from からの相対位置, { kind, parts:[{ bill, p, kind }], bills, label }>
+//   議員の発言は台帳の turns から（1つの発言が複数の議案・段落にまたがるときは段落の順に並べる）。
+//   答弁は台帳の answers から、結びついた議案を添える。台帳の answers に無い機械の答弁（a）は「答弁」とだけ付ける。
+export function shitsugiTurnLabels(sg) {
+  const m = new Map();
+  for (const pt of sg.parts || []) {
+    for (const [off, p, kind] of pt.turns) {
+      const cur = m.get(off) || { parts: [] };
+      cur.parts.push({ bill: pt.bill, p: p === "" || p == null ? null : p, kind });
+      m.set(off, cur);
+    }
+  }
+  for (const v of m.values()) {
+    v.parts.sort((a, b) => (a.p || 0) - (b.p || 0));
+    v.kind = v.parts[v.parts.length - 1].kind;
+    v.bills = [...new Set(v.parts.map((x) => x.bill))];
+    v.label = shitsugiPartLabel(v.parts);
+  }
+  const ans = new Map();
+  for (const pt of sg.parts || []) for (const off of pt.answers || []) {
+    if (m.has(off)) continue;
+    const a = ans.get(off) || ans.set(off, []).get(off);
+    if (!a.includes(pt.bill)) a.push(pt.bill);
+  }
+  for (const [off, bills] of ans) m.set(off, { kind: "a", parts: [], bills, label: "答弁（" + bills.map(billShort).join("・") + "）" });
+  for (const [off, t] of sg.turns || []) if (t === "a" && !m.has(off)) m.set(off, { kind: "a", parts: [], bills: [], label: "答弁" });
+  return m;
 }
 
 // 問いの題の出どころの注記（議会だよりは号を添える）

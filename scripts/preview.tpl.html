@@ -234,7 +234,11 @@ function turnLabels(sg){const m=new Map();if(!sg.turns)return m;const pre=sg.fro
     return m;}
   const multi=sg.turns.some(x=>x[1]==="q"&&x[2]>1);const rq={};for(const [off,t,n] of sg.turns){const sid=sidOf(off);let label="";if(t==="q")label=multi?"質問（第"+n+"問）":"質問";else if(t==="rq"){rq[n]=(rq[n]||0)+1;const k=rq[n];label=(k===1?"再質問":k===2?"再々質問":"再質問（"+k+"回目）")+(multi?"・第"+n+"問":"");}else if(t==="a")label="答弁";m.set(sid,{t,label});}return m;}
 // 台帳（questions）のある一般質問は台帳の種類から見出しを付ける（scripts/lib/labels.mjs）。無ければ機械の見出し
-function labelsFor(sg){if(!sg.ledger)return turnLabels(sg);const m=new Map();for(const [off,v] of ledgerTurnLabels(sg))m.set(sidAt(sg.from,off),{t:v.kind==="a"?"a":"q",label:v.label});return m;}
+// 台帳（parts）のある議案質疑は、台帳の種類と議案から見出しを付ける
+function labelsFor(sg){if(!sg.ledger)return turnLabels(sg);const m=new Map();for(const [off,v] of (sg.kind==="shitsugi"?shitsugiTurnLabels(sg):ledgerTurnLabels(sg)))m.set(sidAt(sg.from,off),{t:v.kind==="a"?"a":"q",label:v.label});return m;}
+// 議案質疑の「対象の議案」の箱（台帳）。議題外・不明は名前で出す。件名は gian.json から
+function shitsugiBills(sg){const ag=((gian[sg._mid]||{}).agenda)||[];const seen=new Set();return (sg.parts||[]).filter(pt=>!seen.has(pt.bill)&&seen.add(pt.bill)).map(pt=>{const a=ag.find(x=>x.no===pt.bill);
+  return '<li>'+(BILL_BOX_NAME[pt.bill]?esc(BILL_BOX_NAME[pt.bill]):esc(pt.bill)+(a?'<span class="srcnote">　'+esc(a.title)+'</span>':''))+'</li>';}).join("");}
 // 質問項目の箱・カードに出す問いの一覧（台帳）。題が空の問いは「第n問（題なし）」、出どころは問いごと
 function ledgerItems(sg){const multiStyle=sg.style==="問いごと";return (sg.questions||[]).map(q=>{const t=(sg.topics||[]).find(x=>x.n===q.n&&x.title===q.title);const src=q.title?titleSrcLabel(q.title_src,t&&t.issue):"";
   return '<li>'+(q.title?esc(q.title):'第'+q.n+'問（題なし）')+(t&&t.theme?'<span class="ttag">'+esc(t.theme)+'</span>':'')+(src?'<span class="srcnote">（'+esc(src)+'）</span>':'')+(multiStyle?'<span class="srcnote">　質問方式：'+esc(q.style)+(q.style_src==="inferred"?STYLE_INFERRED_NOTE:"")+'</span>':'')+'</li>';}).join("");}
@@ -317,11 +321,13 @@ function openThread(sg,focusSid,opt){
   const nq=[...labels.values()].filter(x=>x.t==="q"||x.t==="rq").length,na=[...labels.values()].filter(x=>x.t==="a").length;
   let h='<div class="ttools"><span>質問 '+nq+' 回・答弁 '+na+' 回</span><label><input type="checkbox" id="showFull"> 全文で表示</label><label><input type="checkbox" id="showChair"> 議長の進行発言も表示</label></div>';
   if(sg.kind==="ippan"&&!sg.ledger)h+='<p class="estnote">構造（問いの区切りと質問・再質問の別）は機械の推定です。</p>';
-  if(sg.ledger)h+='<div class="ippanbox" style="margin-bottom:10px"><b>質問項目</b><ol class="qlist">'+ledgerItems(sg)+'</ol></div>';
+  if(sg.kind==="shitsugi"&&!sg.ledger)h+='<p class="estnote">構造（対象の議案と質疑・再質疑の別）は機械の推定です。</p>';
+  if(sg.kind==="shitsugi"&&sg.ledger)h+='<div class="ippanbox" style="margin-bottom:10px"><b>対象の議案</b><ol class="qlist">'+shitsugiBills(sg)+'</ol></div>';
+  else if(sg.ledger)h+='<div class="ippanbox" style="margin-bottom:10px"><b>質問項目</b><ol class="qlist">'+ledgerItems(sg)+'</ol></div>';
   else if(tp.length||tp2.length)h+='<div class="ippanbox" style="margin-bottom:10px"><b>質問項目</b>'+(tp.length?'<span class="srcnote">（議会だより 第'+tp[0].issue+'号）</span>':'<span class="srcnote">（会議録の答弁から推定）</span>')+'<ol class="iptopics">'+(tp.length?tp:tp2).map(x=>'<li>'+esc(x.title)+(x.theme?'<span class="ttag">'+esc(x.theme)+'</span>':'')+'</li>').join("")+'</ol></div>';
   // 議会だよりの各質問が始まる発言（qalign：機械推定）に目印を付ける
   const qmark=new Map(),QT=sg.ledger?"台帳による問いの始まりです":"議会だよりの質問と会議録の発言を機械的に対応付けた目安です";
-  if(sg.ledger){const multi=(sg.questions||[]).length>=2;for(const q of sg.questions||[]){if(!q.start||!multi)continue;const sid=sidAt(sg.from,q.start[0]);(qmark.get(sid)||qmark.set(sid,[]).get(sid)).push('第'+q.n+'問'+(q.title?'「'+q.title+'」':'（題なし）')+(q.start[1]>1?'（p'+q.start[1]+'から）':''));}}
+  if(sg.ledger&&sg.kind==="ippan"){const multi=(sg.questions||[]).length>=2;for(const q of sg.questions||[]){if(!q.start||!multi)continue;const sid=sidAt(sg.from,q.start[0]);(qmark.get(sid)||qmark.set(sid,[]).get(sid)).push('第'+q.n+'問'+(q.title?'「'+q.title+'」':'（題なし）')+(q.start[1]>1?'（p'+q.start[1]+'から）':''));}}
   else if(sg.qalign){const pre=sg.from.slice(0,-4),f0=parseInt(sg.from.slice(-4),10);for(const [n,off] of sg.qalign){const t=tp.find(x=>x.n===n);const sid=pre+String(f0+off).padStart(4,"0");(qmark.get(sid)||qmark.set(sid,[]).get(sid)).push('議会だより 第'+n+'問'+(t?'「'+t.title+'」':''));}}
   const chairNote=new Map();for(const [off,lb] of chairLabels(sg))chairNote.set(sidAt(sg.from,off),lb);
   for(let k=sg._a;k<=sg._b;k++){const e=index[k];if(!e.text)continue;const chair=isChairRole(e.role),tl=labels.get(e.sid);
