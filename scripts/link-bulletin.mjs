@@ -69,7 +69,7 @@ async function run() {
   const ids = new Set(meetings.map((m) => m.id));
   const byPage = new Map(Object.entries(pages).map(([mid, url]) => [(url.match(/(\d{10})/) || [])[1], mid]));
   const nm = (s) => buildNormStr(s || "");
-  const textBySid = new Map(readIndex(DATA).map((e) => [e.sid, e.text]));
+  const textBySid = new Map(readIndex(DATA).map((e) => [e.sid, (e.text || "").replace(/\n/g, "")])); // 段落の改行は照合に使わない
 
   // 会議ID → 議員 → 質問（q_num 順）
   const groups = new Map();

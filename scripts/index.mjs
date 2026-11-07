@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { splitSpeeches, extractGian, extractGianFromToc, detectAgendaRef, guessKind, stripPageHeads } from "./lib/speech.mjs";
+import { splitSpeeches, extractGian, extractGianFromToc, detectAgendaRef, guessKind, stripPageHeads, stripPara, speechText } from "./lib/speech.mjs";
 import { textKey } from "./lib/keys.mjs";
 import { dateFromName } from "./lib/dates.mjs";
 import { parseDay } from "./lib/proceedings.mjs";
@@ -78,11 +78,12 @@ function run() {
       const key = textKey(m.id, pdf);
       const txtPath = join(TEXT_DIR, key + ".txt");
       if (!existsSync(txtPath)) continue;
-      const raw = stripPageHeads(readFileSync(txtPath, "utf8"));
-      const seatMap = buildSeatMap(raw); // 氏名→「N番」（その日の名簿）
+      const raw = stripPageHeads(readFileSync(txtPath, "utf8")); // 段落の印 U+2029 を含む
+      const plain = stripPara(raw); // 印を除いたもの（議事日程・名簿の読み取り用）
+      const seatMap = buildSeatMap(plain); // 氏名→「N番」（その日の名簿）
 
-      for (const g of extractGian(raw)) if (!agendaMap.has(g.no)) agendaMap.set(g.no, g);
-      for (const ip of detectIppan(raw)) if (!ippanMap.has(ip.member)) ippanMap.set(ip.member, ip);
+      for (const g of extractGian(plain)) if (!agendaMap.has(g.no)) agendaMap.set(g.no, g);
+      for (const ip of detectIppan(plain)) if (!ippanMap.has(ip.member)) ippanMap.set(ip.member, ip);
 
       const speeches = splitSpeeches(raw);
       const dateTag = pdf.date ? pdf.date.replace(/-/g, "") : key.split("_").slice(1).join("_");
@@ -97,10 +98,11 @@ function run() {
           sid: `${m.id}_${dateTag}_${String(i).padStart(4, "0")}`,
           meetingId: m.id, meeting: m.name, type: m.type, year: m.year, era: m.era,
           date, pdf: pdf.url, role: (/(^[0-9０-９]*番$|^番$)/.test(s.role) ? (seatMap[s.name] || s.role) : s.role), name: s.name,
-          agendaRef: detectAgendaRef(s.text), text: s.text.replace(/\n/g, ""),
+          agendaRef: detectAgendaRef(stripPara(s.text)), text: speechText(s.text),
         };
         index.push(e);
-        day.push({ i, sid: e.sid, role: e.role, name: e.name, text: e.text });
+        // 審議構造の解析には改行の無い文字を渡す（段落の区切りで解析の結果を変えない）
+        day.push({ i, sid: e.sid, role: e.role, name: e.name, text: e.text.replace(/\n/g, "") });
       });
     }
     // 目次の件名で上書き（目次が正）＋目次にしかない議案を追加。区分も正しい件名で再判定。
