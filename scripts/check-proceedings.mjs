@@ -67,7 +67,10 @@ for (const m of meetings) {
 }
 
 const pct = (a, b) => (b ? ((100 * a) / b).toFixed(1) + "%" : "-");
-console.log(`一般質問：目次の質問者 ${tIp} 名中 ${tIpOk} 名を検出（${pct(tIpOk, tIp)}）`);
+// 一般質問の台帳（data/ippan.tsv）を通した区切りと問いの数（index.mjs が questions を足したもの）
+const ipSegs = Object.values(proc).flatMap((p) => p.segments).filter((s) => s.kind === "ippan");
+const ledSegs = ipSegs.filter((s) => s.ledger);
+console.log(`一般質問：目次の質問者 ${tIp} 名中 ${tIpOk} 名を検出（${pct(tIpOk, tIp)}）／区切り ${ipSegs.length} のうち台帳あり ${ledSegs.length}・問い ${ledSegs.reduce((n, s) => n + (s.questions || []).length, 0)}`);
 console.log(`採決結果：議案（報第を除く）${tBills} 件中 ${tVoted} 件で取得（${pct(tVoted, tBills)}）`);
 console.log(`場面の分類：議長以外の発言 ${tSp} 件中 ${tCovered} 件をいずれかの場面に分類（${pct(tCovered, tSp)}）`);
 // 公開データのファイルサイズ（GitHub は 50MB で警告、100MB で拒否）

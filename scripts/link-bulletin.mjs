@@ -5,6 +5,10 @@
 //   取得に失敗しても会議録から推定した質問項目だけで続行する（エラー終了しない）。
 // あわせて、議会だよりの各質問（題名＋問の本文）が会議録のどの議員発言に当たるかを推定し、
 // 一般質問の場面に qalign: [[質問番号, from からの相対位置], …] として付ける（確信度が低い質問は付けない）。
+// 一般質問の台帳（data/ippan.tsv）のある区切りでは、題と位置は台帳を正とする：
+//   topics は index.mjs が台帳から作ったものを使い、議会だよりの題と同じ題の問いに theme と issue を足す
+//   （議会だよりの問いの順が発言の順と違う号があるので、問番号ではなく題で合わせる）。
+//   qalign は、議会だよりの各問いと同じ題の台帳の問いの start から作る（文字の重なりによる推定は使わない）。
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -82,17 +86,35 @@ async function run() {
     (groups.get(key) || groups.set(key, []).get(key)).push(q);
   }
 
-  let linked = 0, aligned = 0;
+  let linked = 0, aligned = 0, ledgerLinked = 0, ledgerAligned = 0, ledgerNoTitle = [];
+  const sqT = (x) => String(x || "").normalize("NFKC").replace(/[\s　]/g, "");
   for (const [mid, { segments }] of Object.entries(proc)) {
     for (const s of segments) {
       if (s.kind !== "ippan") continue;
-      s.topics = (s.topics || []).filter((t) => t.src !== "bulletin"); // 再実行しても重複しない
       delete s.qalign;
       const qs = (groups.get(mid + "|" + nm(s.member)) || []).sort((a, b) => a.q_num - b.q_num);
-      if (!qs.length) continue;
-      s.topics.push(...qs.map((q) => ({ n: q.q_num, title: q.title, theme: q.theme || null, src: "bulletin", issue: q.issue })));
-      const qa = alignQuestions(s, qs, (sid) => textBySid.get(sid));
-      if (qa.length) { s.qalign = qa; aligned += qa.length; }
+      if (s.ledger) {
+        // 台帳のある区切り：topics は台帳のもの。再実行しても重複しないよう、前に足した theme・issue を外してから足す
+        s.topics = (s.topics || []).map(({ theme, issue, ...t }) => t);
+        if (!qs.length) continue;
+        const qa = [];
+        for (const q of qs) {
+          const t = s.topics.find((x) => sqT(x.title) === sqT(q.title));
+          if (!t) { ledgerNoTitle.push(`${s.from} 議会だより第${q.q_num}問「${q.title}」`); continue; }
+          if (q.theme) t.theme = q.theme;
+          t.issue = q.issue;
+          const qn = s.questions.find((x) => x.n === t.n);
+          if (qn && qn.start) qa.push([q.q_num, qn.start[0]]);
+        }
+        if (qa.length) { s.qalign = qa; aligned += qa.length; ledgerAligned += qa.length; }
+        ledgerLinked++;
+      } else {
+        s.topics = (s.topics || []).filter((t) => t.src !== "bulletin"); // 再実行しても重複しない
+        if (!qs.length) continue;
+        s.topics.push(...qs.map((q) => ({ n: q.q_num, title: q.title, theme: q.theme || null, src: "bulletin", issue: q.issue })));
+        const qa = alignQuestions(s, qs, (sid) => textBySid.get(sid));
+        if (qa.length) { s.qalign = qa; aligned += qa.length; }
+      }
       const ip = ((gian[mid] || {}).ippan || []).find((x) => nm(x.member) === nm(s.member));
       if (ip) {
         ip.topics = s.topics.map(({ n, title, theme, src }) => ({ n, title, ...(theme ? { theme } : {}), src }));
@@ -108,7 +130,9 @@ async function run() {
     return !((proc[mid] || { segments: [] }).segments.some((s) => s.kind === "ippan" && nm(s.member) === n));
   });
   console.log(`議会だより：${questions.length} 問 → 一般質問 ${linked} 件に見出しを結びつけ（会議ID不明 ${unresolved} 問／会議録側に該当なし ${unmatched.length} 人）`);
-  console.log(`  質問ごとの位置合わせ：${aligned} 問（確信度の低い質問は付けない）`);
+  console.log(`  質問ごとの位置合わせ：${aligned} 問（うち台帳の start から ${ledgerAligned} 問。台帳の無い区切りでは確信度の低い質問は付けない）`);
+  console.log(`  台帳のある区切り：${ledgerLinked} 件（議会だよりの問いと同じ題が台帳に無いもの ${ledgerNoTitle.length} 問）`);
+  if (ledgerNoTitle.length) console.log("  台帳に同じ題が無い: " + ledgerNoTitle.join("、"));
   if (unmatched.length) console.log("  該当なし: " + unmatched.join(", "));
 }
 run();

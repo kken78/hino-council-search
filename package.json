@@ -14,6 +14,8 @@
     "index": "node scripts/index.mjs",
     "link-bulletin": "node scripts/link-bulletin.mjs",
     "check": "node scripts/check-proceedings.mjs",
+    "check:ledger": "node scripts/check-ledger.mjs",
+    "ledger:draft": "node scripts/ledger-draft.mjs",
     "highlights": "node scripts/highlights.mjs",
     "test": "node --test scripts/test/*.test.mjs",
     "split": "node scripts/index.mjs",

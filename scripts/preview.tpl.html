@@ -39,7 +39,7 @@ a{color:var(--hinona)}.wrap{max-width:1040px;margin:0 auto;padding:0 16px 60px}
 .card.r-giin{border-left-color:#2b4663}.card.r-tou{border-left-color:#6b5a36}.card.r-gicho{border-left-color:var(--hinona)}
 .card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
 .who{font-size:16px;font-weight:600;background:none;border:0;padding:0;cursor:pointer;font-family:inherit;color:var(--ink)}.who:hover{text-decoration:underline}
-.rolebadge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;margin-left:8px;vertical-align:2px}
+.rolebadge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;margin-left:8px;vertical-align:2px;white-space:nowrap}
 .rb-giin{background:#eaf0f5;color:#2b4663}.rb-tou{background:#f1ece2;color:#6b5a36}.rb-gicho{background:var(--hinona-soft);color:var(--hinona)}
 .rolename{font-size:12px;color:var(--slate);margin-left:6px}
 .badge{font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--line-strong);color:var(--slate);white-space:nowrap;background:#fbfaf6}
@@ -83,7 +83,7 @@ dialog.thread::backdrop{background:rgba(20,28,40,.55)}
 .turn .tbody-text{font-size:14px;white-space:pre-wrap;margin-top:4px;color:#26303f}
 .turn .tfoot{margin-top:5px;font-size:12px}
 .turn .tpara.pmark{background:#fff1b8;scroll-margin-top:80px}
-.thread.hide-chair .t-chair{display:none}
+.thread.hide-chair .t-chair:not(.t-note){display:none}.chairmark{display:inline-block;font-size:11px;font-weight:700;color:#7a3b16;background:#fbefe4;border:1px solid #e8cdb6;border-radius:4px;padding:0 6px;margin-right:6px}.estnote{font-size:11.5px;color:var(--slate);margin:0 0 8px}.qlist{margin:4px 0 0;padding-left:1.4em}.qlist li{margin:3px 0}
 .qmark{font-size:12px;font-weight:700;color:#2e6b46;background:#eafaf0;border-left:4px solid #2e6b46;border-radius:4px;padding:3px 10px;margin:12px 0 6px}
 .turn .tfull{display:none}.turn.open .tfull,.thread.show-full .tfull{display:inline}.turn.open .tshort,.thread.show-full .tshort{display:none}.thread.show-full .tmore{display:none}.tmore{font-size:12px;margin-top:3px}
 @media(max-width:560px){dialog.thread{width:100vw;max-width:100vw;max-height:100vh;height:100vh;border-radius:0}.turn.t-a{margin-left:12px}}
@@ -175,6 +175,7 @@ footer{margin:34px 0 16px;font-size:11.5px;color:var(--slate);border-top:1px sol
 <button id="toTop" type="button" aria-label="ページ先頭へ戻る" title="先頭へ戻る">↑</button>
 
 <script>
+/*__LABELS__*/
 function start(DATA){
 const {meetings, index, gian, dict, toc, topics, highlights, pages, local, proceedings} = DATA;
 const {variants, synonyms, yomi} = dict;
@@ -232,6 +233,13 @@ function turnLabels(sg){const m=new Map();if(!sg.turns)return m;const pre=sg.fro
       else{k++;m.set(sidOf(off),{t:"rq",label:(k===1?"再質問":k===2?"再々質問":"再質問（"+k+"回目）")+(cur?"・第"+cur.join("・")+"問":"")});}}
     return m;}
   const multi=sg.turns.some(x=>x[1]==="q"&&x[2]>1);const rq={};for(const [off,t,n] of sg.turns){const sid=sidOf(off);let label="";if(t==="q")label=multi?"質問（第"+n+"問）":"質問";else if(t==="rq"){rq[n]=(rq[n]||0)+1;const k=rq[n];label=(k===1?"再質問":k===2?"再々質問":"再質問（"+k+"回目）")+(multi?"・第"+n+"問":"");}else if(t==="a")label="答弁";m.set(sid,{t,label});}return m;}
+// 台帳（questions）のある一般質問は台帳の種類から見出しを付ける（scripts/lib/labels.mjs）。無ければ機械の見出し
+function labelsFor(sg){if(!sg.ledger)return turnLabels(sg);const m=new Map();for(const [off,v] of ledgerTurnLabels(sg))m.set(sidAt(sg.from,off),{t:v.kind==="a"?"a":"q",label:v.label});return m;}
+// 質問項目の箱・カードに出す問いの一覧（台帳）。題が空の問いは「第n問（題なし）」、出どころは問いごと
+function ledgerItems(sg){const multiStyle=sg.style==="問いごと";return (sg.questions||[]).map(q=>{const t=(sg.topics||[]).find(x=>x.n===q.n&&x.title===q.title);const src=q.title?titleSrcLabel(q.title_src,t&&t.issue):"";
+  return '<li>'+(q.title?esc(q.title):'第'+q.n+'問（題なし）')+(t&&t.theme?'<span class="ttag">'+esc(t.theme)+'</span>':'')+(src?'<span class="srcnote">（'+esc(src)+'）</span>':'')+(multiStyle?'<span class="srcnote">　質問方式：'+esc(q.style)+(q.style_src==="inferred"?STYLE_INFERRED_NOTE:"")+'</span>':'')+'</li>';}).join("");}
+// 区切りの方式が1種類のとき、推定なら「（発言の運びから推定）」を添える
+function ledgerStyle(sg){if(!sg.ledger||sg.style==="問いごと")return sg.style||"";const inf=(sg.questions||[]).some(q=>q.style_src==="inferred");return sg.style+(inf?STYLE_INFERRED_NOTE:"");}
 {const _a=$("#tocN"),_b=$("#ixN");if(_a)_a.textContent=toc.length;if(_b)_b.textContent=toc.filter(t=>t.indexed).length;}
 // 会議セレクト（索引済み）
 for(const t of toc.filter(x=>x.indexed)){const o=document.createElement("option");o.value=t.id;o.textContent=t.name;$("#fMeeting").appendChild(o);}
@@ -301,19 +309,24 @@ const CUT=240;
 function paraHTML(t,p){const parts=t.split(/(\n+)/);let n=0;for(let i=0;i<parts.length;i+=2)if(parts[i].trim())n++;if(n<2||!(p>=1&&p<=n))return null;let h="",c=0;for(let i=0;i<parts.length;i++){if(i%2||!parts[i].trim()){h+=esc(parts[i]);continue;}c++;h+='<span class="tpara'+(c===p?' pmark':'')+'" data-p="'+c+'">'+esc(parts[i])+'</span>';}return h;}
 function turnText(t,open,para){if(open&&para){const ph=paraHTML(t,para);if(ph)return '<div class="tbody-text">'+ph+'</div>';}if(t.length<=CUT+40||open)return '<div class="tbody-text">'+esc(t)+'</div>';return '<div class="tbody-text"><span class="tshort">'+esc(t.slice(0,CUT))+'…</span><span class="tfull">'+esc(t)+'</span></div><button type="button" class="more tmore" aria-expanded="false">続きを読む（全'+t.length+'字）</button>';}
 function openThread(sg,focusSid,opt){
-  const dlg=$("#thread"),m=toc.find(t=>t.id===sg._mid)||{name:""};const labels=turnLabels(sg);
+  const dlg=$("#thread"),m=toc.find(t=>t.id===sg._mid)||{name:""};const labels=labelsFor(sg);
   const bl=sg.bills&&sg.bills.length?sg.bills.slice(0,3).join("、")+(sg.bills.length>3?" ほか"+(sg.bills.length-3)+"件":""):"";
   $("#threadTitle").textContent=sg.kind==="vote"?"採決："+bl:(sg.member+(sg.seat?"（"+sg.seat+"）":"")+" の"+sceneLabel(sg));
-  $("#threadSub").textContent=[m.name,sg.date,sg.style?"質問方式："+sg.style:"",sg.kind==="vote"?sg.result+(sg.method?"（"+sg.method+"）":""):(sg.bills&&sg.bills.length?"対象："+sg.bills.join("、"):"")].filter(Boolean).join("　|　");
+  $("#threadSub").textContent=[m.name,sg.date,sg.style?"質問方式："+(sg.ledger?ledgerStyle(sg):sg.style):"",sg.kind==="vote"?sg.result+(sg.method?"（"+sg.method+"）":""):(sg.bills&&sg.bills.length?"対象："+sg.bills.join("、"):"")].filter(Boolean).join("　|　");
   const tp=(sg.topics||[]).filter(x=>x.src==="bulletin"),tp2=(sg.topics||[]).filter(x=>x.src!=="bulletin");
   const nq=[...labels.values()].filter(x=>x.t==="q"||x.t==="rq").length,na=[...labels.values()].filter(x=>x.t==="a").length;
   let h='<div class="ttools"><span>質問 '+nq+' 回・答弁 '+na+' 回</span><label><input type="checkbox" id="showFull"> 全文で表示</label><label><input type="checkbox" id="showChair"> 議長の進行発言も表示</label></div>';
-  if(tp.length||tp2.length)h+='<div class="ippanbox" style="margin-bottom:10px"><b>質問項目</b>'+(tp.length?'<span class="srcnote">（議会だより 第'+tp[0].issue+'号）</span>':'<span class="srcnote">（会議録の答弁から推定）</span>')+'<ol class="iptopics">'+(tp.length?tp:tp2).map(x=>'<li>'+esc(x.title)+(x.theme?'<span class="ttag">'+esc(x.theme)+'</span>':'')+'</li>').join("")+'</ol></div>';
+  if(sg.kind==="ippan"&&!sg.ledger)h+='<p class="estnote">構造（問いの区切りと質問・再質問の別）は機械の推定です。</p>';
+  if(sg.ledger)h+='<div class="ippanbox" style="margin-bottom:10px"><b>質問項目</b><ol class="qlist">'+ledgerItems(sg)+'</ol></div>';
+  else if(tp.length||tp2.length)h+='<div class="ippanbox" style="margin-bottom:10px"><b>質問項目</b>'+(tp.length?'<span class="srcnote">（議会だより 第'+tp[0].issue+'号）</span>':'<span class="srcnote">（会議録の答弁から推定）</span>')+'<ol class="iptopics">'+(tp.length?tp:tp2).map(x=>'<li>'+esc(x.title)+(x.theme?'<span class="ttag">'+esc(x.theme)+'</span>':'')+'</li>').join("")+'</ol></div>';
   // 議会だよりの各質問が始まる発言（qalign：機械推定）に目印を付ける
-  const qmark=new Map();if(sg.qalign){const pre=sg.from.slice(0,-4),f0=parseInt(sg.from.slice(-4),10);for(const [n,off] of sg.qalign){const t=tp.find(x=>x.n===n);const sid=pre+String(f0+off).padStart(4,"0");(qmark.get(sid)||qmark.set(sid,[]).get(sid)).push('議会だより 第'+n+'問'+(t?'「'+t.title+'」':''));}}
+  const qmark=new Map(),QT=sg.ledger?"台帳による問いの始まりです":"議会だよりの質問と会議録の発言を機械的に対応付けた目安です";
+  if(sg.ledger){const multi=(sg.questions||[]).length>=2;for(const q of sg.questions||[]){if(!q.start||!multi)continue;const sid=sidAt(sg.from,q.start[0]);(qmark.get(sid)||qmark.set(sid,[]).get(sid)).push('第'+q.n+'問'+(q.title?'「'+q.title+'」':'（題なし）')+(q.start[1]>1?'（p'+q.start[1]+'から）':''));}}
+  else if(sg.qalign){const pre=sg.from.slice(0,-4),f0=parseInt(sg.from.slice(-4),10);for(const [n,off] of sg.qalign){const t=tp.find(x=>x.n===n);const sid=pre+String(f0+off).padStart(4,"0");(qmark.get(sid)||qmark.set(sid,[]).get(sid)).push('議会だより 第'+n+'問'+(t?'「'+t.title+'」':''));}}
+  const chairNote=new Map();for(const [off,lb] of chairLabels(sg))chairNote.set(sidAt(sg.from,off),lb);
   for(let k=sg._a;k<=sg._b;k++){const e=index[k];if(!e.text)continue;const chair=isChairRole(e.role),tl=labels.get(e.sid);
-    if(qmark.has(e.sid))h+=qmark.get(e.sid).map(x=>'<div class="qmark" title="議会だよりの質問と会議録の発言を機械的に対応付けた目安です">'+esc(x)+'</div>').join("");const cls=chair?"t-chair":(tl&&tl.t==="a"?"t-a":"t-q");const cat=roleCat(e),bc=RB[cat]?RB[cat][0]:"";
-    if(chair&&sg.kind!=="vote"){h+='<div class="turn t-chair" data-sid="'+esc(e.sid)+'">議長：'+esc(e.text)+'</div>';continue;}
+    if(qmark.has(e.sid))h+=qmark.get(e.sid).map(x=>'<div class="qmark" title="'+QT+'">'+esc(x)+'</div>').join("");const cls=chair?"t-chair":(tl&&tl.t==="a"?"t-a":"t-q");const cat=roleCat(e),bc=RB[cat]?RB[cat][0]:"";
+    if(chair&&sg.kind!=="vote"){const cm=chairNote.get(e.sid);h+='<div class="turn t-chair'+(cm?' t-note':'')+'" data-sid="'+esc(e.sid)+'">'+(cm?'<span class="chairmark">'+esc(cm)+'</span>':'')+'議長：'+esc(e.text)+'</div>';continue;}
     h+='<div class="turn '+cls+(e.sid===focusSid?' focus':'')+'" data-sid="'+esc(e.sid)+'"><div>'+(tl&&tl.label?'<span class="tlabel">'+tl.label+'</span>':'')+'<b>'+esc(e.name)+'</b>'+(cat?'<span class="rolebadge '+bc+'">'+cat+'</span>':'')+(e.role?'<span class="rolename">'+esc(e.role)+'</span>':'')+'</div>'+turnText(e.text,e.sid===focusSid,e.sid===focusSid&&opt?opt.p:null)+(e.pdf?'<div class="tfoot"><a class="pdflink" href="'+e.pdf+'" target="_blank" rel="noreferrer">会議録PDFを開く</a></div>':'')+'</div>';}
   $("#threadBody").innerHTML=h;dlg.classList.add("hide-chair");dlg.classList.remove("show-full");
   $("#showFull").onchange=ev=>dlg.classList.toggle("show-full",ev.target.checked);
@@ -365,8 +378,9 @@ $("#threadLink").onclick=()=>copyLink(location.href);
 $("#thread").addEventListener("click",ev=>{if(ev.target===$("#thread")){$("#threadClose").click();return;}const b=ev.target.closest(".tmore");if(b){const tu=b.closest(".turn");const o=tu.classList.toggle("open");b.setAttribute("aria-expanded",o);b.textContent=o?"閉じる":"続きを読む";}});
 // 一般質問の質問者カード（proceedings があるとき）
 function ipCard(sg){const bt=(sg.topics||[]).filter(x=>x.src==="bulletin"),mt=(sg.topics||[]).filter(x=>x.src!=="bulletin");const tp=bt.length?bt:mt;
-  return '<div class="ipcard"><div class="iphead">'+(sg.seat?'<span class="small">'+esc(sg.seat)+'</span>':'')+'<span class="ipname">'+esc(sg.member)+'</span>'+(sg.style?'<span class="stylebadge" title="議員が宣言した質問方式">'+esc(sg.style)+'</span>':'')+'<span class="small">'+esc(sg.date||"")+'</span></div>'
-   +(tp.length?'<ol class="iptopics">'+tp.map(x=>'<li>'+esc(x.title)+(x.theme?'<span class="ttag">'+esc(x.theme)+'</span>':'')+'</li>').join("")+'</ol><div class="srcnote">'+(bt.length?'質問項目：議会だより（第'+bt[0].issue+'号）':'質問項目：会議録の答弁から推定')+'</div>':'<div class="srcnote">質問項目は未抽出です（やりとりから確認できます）</div>')
+  const stt=sg.ledger?(sg.style==="問いごと"?"問いごとに方式が違います":ledgerStyle(sg)!==sg.style?"発言の運びから推定した質問方式":"議員が宣言した質問方式"):"議員が宣言した質問方式";
+  return '<div class="ipcard"><div class="iphead">'+(sg.seat?'<span class="small">'+esc(sg.seat)+'</span>':'')+'<span class="ipname">'+esc(sg.member)+'</span>'+(sg.style?'<span class="stylebadge" title="'+stt+'">'+esc(sg.ledger?ledgerStyle(sg):sg.style)+'</span>':'')+'<span class="small">'+esc(sg.date||"")+'</span></div>'
+   +(sg.ledger?'<ol class="iptopics">'+ledgerItems(sg)+'</ol>':tp.length?'<ol class="iptopics">'+tp.map(x=>'<li>'+esc(x.title)+(x.theme?'<span class="ttag">'+esc(x.theme)+'</span>':'')+'</li>').join("")+'</ol><div class="srcnote">'+(bt.length?'質問項目：議会だより（第'+bt[0].issue+'号）':'質問項目：会議録の答弁から推定')+'</div>':'<div class="srcnote">質問項目は未抽出です（やりとりから確認できます）</div>')
    +'<div class="ipacts"><button type="button" class="linkbtn primary" data-thr="'+esc(sg.from)+'">やりとりを見る</button><button type="button" class="linkbtn" data-spk2="'+esc(sg.member)+'">この議員の発言を検索</button></div></div>';}
 // ── 議案ごとの審議の経過（提案→質疑→委員長報告→討論→採決） ──
 const resCls=r=>/否決|不採択|不認定|不同意|不承認/.test(r)?"res-ng":/継続|撤回/.test(r)?"res-hold":"res-ok";

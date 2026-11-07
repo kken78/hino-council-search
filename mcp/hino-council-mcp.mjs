@@ -56,7 +56,7 @@ const CACHE_DIR =
   process.env.HINO_MCP_CACHE || path.join(os.homedir(), ".cache", "hino-council-mcp");
 const MAX_AGE_MS = Number(process.env.HINO_MCP_MAX_AGE_HOURS || 24) * 3600 * 1000;
 
-const SERVER_INFO = { name: "hino-council-mcp", version: "0.4.2" };
+const SERVER_INFO = { name: "hino-council-mcp", version: "0.5.0" };
 
 // クライアント（Claude）への利用方針。冒頭のデータ自己申告は起動時に実データから生成する
 // （council-dashboard はフォークで他自治体運用があるため、「日野町」をハードコードしない）。
@@ -322,7 +322,121 @@ function bulletinHit(r) {
  * 間隔が GAP を超えたら別ブロック（別議題）とみなす。ヒューリスティックである旨は出力にも明記。
  */
 const GAP = 12;
+// ---- 一般質問の台帳の見出し（scripts/lib/labels.mjs の写し。このサーバーを単一ファイルで動かすため。
+//      2つが同じことは scripts/test/labels.test.mjs で確かめる。直すときは labels.mjs を直してここに写す）
+// __LABELS_BEGIN__
+// 台帳の発言の種類 → 見出しの名前
+const TURN_NAME = { q: "質問", rq: "再質問", rrq: "再々質問", q4: "4回目の質問", req: "要望", x: "回に数えない発言" };
+// 議長の注意の種類 → 印
+const CHAIR_LABEL = { rounds: "議長：回数の注意", notice: "議長：通告外の注意" };
+// 題の出どころ → 注記（議会だよりは号を添える）
+const TITLE_SRC_LABEL = { bulletin: "議会だより", notice: "通告の件名", minutes: "会議録の発言による" };
+const STYLE_INFERRED_NOTE = "（発言の運びから推定）";
+
+// from からの相対位置 → sid
+function sidAt(from, off) {
+  return from.slice(0, -4) + String(parseInt(from.slice(-4), 10) + off).padStart(4, "0");
+}
+
+// 1つの問いの中の1つの発言の見出し
+//   kind：台帳の種類、n：問番号、multi：問いが2つ以上か、items：一問一答の項目の番号（1から）、fromP：この発言の途中から問いが始まるときの段落
+function partLabel(kind, n, multi, items, fromP) {
+  if (kind === "x") return "（" + TURN_NAME.x + "）";
+  let name = TURN_NAME[kind] || kind;
+  if (kind === "q" && items && items.length) name += "・項目" + items.join("・");
+  const extra = [];
+  if (kind === "q4") extra.push("答弁あり");
+  if (multi) extra.push("第" + n + "問");
+  if (fromP) extra.push("p" + fromP + "から");
+  return name + (extra.length ? "（" + extra.join("。") + "）" : "");
+}
+
+// 区切り（台帳のあるもの）→ Map<from からの相対位置, { kind, parts:[{ n, kind }], n, label }>
+//   議員の発言は台帳の turns から。1つの発言が2つの問いにまたがるときは両方を「／」でつなぐ。
+//   答弁は機械の turns の "a" から取り、直前の議員の発言の問番号を付ける。
+function ledgerTurnLabels(sg) {
+  const m = new Map();
+  const qs = sg.questions || [];
+  const multi = qs.length >= 2;
+  for (const q of qs) {
+    const itemNo = new Map();
+    (q.items || []).forEach(([off], k) => (itemNo.get(off) || itemNo.set(off, []).get(off)).push(k + 1));
+    for (const [off, kind] of q.turns) {
+      const cur = m.get(off) || { parts: [] };
+      const fromP = cur.parts.length && q.start && q.start[0] === off ? q.start[1] : null;
+      cur.parts.push({ n: q.n, kind, label: partLabel(kind, q.n, multi, itemNo.get(off), fromP) });
+      m.set(off, cur);
+    }
+  }
+  for (const v of m.values()) {
+    const last = v.parts[v.parts.length - 1];
+    v.kind = last.kind;
+    v.n = last.n;
+    v.label = v.parts.map((p) => p.label).join("／");
+  }
+  let cur = null;
+  for (const [off, t] of [...(sg.turns || [])].sort((a, b) => a[0] - b[0])) {
+    if (m.has(off)) { cur = m.get(off).n; continue; }
+    if (t === "a") m.set(off, { kind: "a", parts: [], n: cur, label: "答弁" + (multi && cur ? "（第" + cur + "問）" : "") });
+  }
+  return m;
+}
+
+// 区切り → Map<from からの相対位置, 議長の注意の印>
+function chairLabels(sg) {
+  return new Map((sg.chair || []).map(([off, kind]) => [off, CHAIR_LABEL[kind] || kind]));
+}
+
+// 問いの題の出どころの注記（議会だよりは号を添える）
+function titleSrcLabel(src, issue) {
+  if (src === "bulletin") return TITLE_SRC_LABEL.bulletin + (issue ? " 第" + issue + "号" : "");
+  return TITLE_SRC_LABEL[src] || "";
+}
+// __LABELS_END__
+
+// 台帳のある一般質問の区切り → 問いごとの構造（questions）と議長の注意（chair）
+const KIND_ORDER = ["q", "rq", "rrq", "q4", "req", "x"];
+const STYLE_SRC_NAME = { declared: "議員の宣言", inferred: "発言の運びから推定" };
+function ledgerQuestions(sg) {
+  const topic = (q) => (sg.topics || []).find((t) => t.n === q.n && t.title === q.title) || {};
+  return (sg.questions || []).map((q) => {
+    const turns = {};
+    for (const k of KIND_ORDER) {
+      const sids = q.turns.filter(([, x]) => x === k).map(([off]) => sidAt(sg.from, off));
+      if (sids.length) turns[TURN_NAME[k]] = sids;
+    }
+    const t = topic(q);
+    return {
+      n: q.n,
+      title: q.title || null,
+      title_src: q.title ? titleSrcLabel(q.title_src, t.issue) : null,
+      ...(t.theme ? { theme: t.theme } : {}),
+      style: q.style,
+      style_src: STYLE_SRC_NAME[q.style_src] || null,
+      start: q.start ? { sid: sidAt(sg.from, q.start[0]), paragraph: q.start[1] } : null,
+      turns,
+      ...(q.items && q.items.length ? { items: q.items.map(([off, p]) => ({ sid: sidAt(sg.from, off), paragraph: p })) } : {}),
+      conf: q.conf,
+    };
+  });
+}
+function ledgerChair(sg) {
+  return (sg.chair || []).map(([off, kind]) => ({ sid: sidAt(sg.from, off), note: (CHAIR_LABEL[kind] || kind).replace(/^議長：/, "") }));
+}
+// 台帳のある区切りの発言ごとの見出し（sid → 返す項目）
+function ledgerTurnKinds(sg) {
+  const m = new Map();
+  for (const [off, v] of ledgerTurnLabels(sg)) {
+    const sid = sidAt(sg.from, off);
+    if (v.kind === "a") m.set(sid, { turn: v.label, ...(v.n ? { question_no: v.n } : {}) });
+    else m.set(sid, { turn: v.label, question_no: v.parts.length > 1 ? v.parts.map((p) => p.n) : v.n, kind: v.parts.map((p) => TURN_NAME[p.kind] || p.kind) });
+  }
+  for (const [off, lb] of chairLabels(sg)) m.set(sidAt(sg.from, off), { turn: "議長（進行）", chair_note: lb.replace(/^議長：/, "") });
+  return m;
+}
+
 // 場面内の各発言のターン種別（質問・再質問・答弁）。turns は [from の sid 連番からの相対位置, 種別, 問番号]
+// 台帳の無い一般質問の区切りと、議案質疑で使う（機械の推定）
 function turnKinds(sg) {
   const m = new Map();
   if (!sg.turns || !sg.from) return m;
@@ -364,7 +478,10 @@ function memberBlocks(meetingId, nMember) {
         ...(sg.bills && sg.bills.length ? { bills: sg.bills } : {}),
         ...(sg.stance ? { stance: sg.stance } : {}),
         ...(sg.committee ? { committee: sg.committee } : {}),
-        ...(sg.topics && sg.topics.length ? { topics: sg.topics.map(({ n, title, theme, src }) => ({ n, title, theme, src: src === "bulletin" ? "議会だより" : "会議録の答弁から推定" })) } : {}),
+        ...(sg.kind === "ippan" ? { structure: sg.ledger ? "台帳" : "推定" } : {}),
+        ...(sg.ledger
+          ? { questions: ledgerQuestions(sg), ...(sg.chair && sg.chair.length ? { chair: ledgerChair(sg) } : {}) }
+          : sg.topics && sg.topics.length ? { topics: sg.topics.map(({ n, title, theme, src }) => ({ n, title, theme, src: src === "bulletin" ? "議会だより" : "会議録の答弁から推定" })) } : {}),
         preview: (entries.find((e) => e._nName === nMember)?.text || "").slice(0, 80),
         _entries: entries,
         _seg: sg,
@@ -669,7 +786,7 @@ const TOOLS = [
       const out = [];
       let used = 0;
       let k = offset;
-      const tk = b._seg ? turnKinds(b._seg) : new Map();
+      const tk = b._seg ? (b._seg.ledger ? ledgerTurnKinds(b._seg) : turnKinds(b._seg)) : new Map();
       for (; k < b._entries.length; k++) {
         const e = b._entries[k];
         if (used + e.text.length > max_chars && out.length > 0) break;
@@ -684,12 +801,19 @@ const TOOLS = [
         block: b.block,
         ...(b.scene ? { scene: b.scene } : {}),
         ...(b.style ? { style: b.style } : {}),
+        ...(b.structure ? { structure: b.structure } : {}),
+        ...(b.questions ? { questions: b.questions } : {}),
+        ...(b.chair ? { chair: b.chair } : {}),
         ...(b.topics ? { topics: b.topics } : {}),
         total_speeches: b._entries.length,
         returned: { from: offset, to: k - 1 },
         truncated: k < b._entries.length ? { next_offset: k } : undefined,
         exchange: out,
-        note: (b._seg ? "範囲とターン種別（質問・再質問・答弁）は会議録の議長の進行から機械抽出したものです。" : "ブロック区切りは機械推定のヒューリスティックです。") + NOTE_VERIFY,
+        note: (b._seg && b._seg.ledger
+          ? "範囲は会議録の議長の進行から機械抽出したもの。問いの区切り・発言の種類（質問・再質問・再々質問・要望など）・方式・題は、人が確認した一般質問の台帳による（conf は台帳の確信）。"
+          : b._seg
+            ? "範囲とターン種別（質問・再質問・答弁）は会議録の議長の進行から機械抽出したものです（推定）。"
+            : "ブロック区切りは機械推定のヒューリスティックです。") + NOTE_VERIFY,
       };
     },
   },
