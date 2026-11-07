@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { splitSpeeches, extractGian, extractGianFromToc, detectAgendaRef, guessKind, stripPageHeads, stripPara, speechText } from "./lib/speech.mjs";
-import { textKey } from "./lib/keys.mjs";
+import { textKey, isTocPdf } from "./lib/keys.mjs";
 import { dateFromName } from "./lib/dates.mjs";
 import { parseDay } from "./lib/proceedings.mjs";
 import { writeIndex } from "./lib/data.mjs";
@@ -86,10 +86,10 @@ function run() {
       for (const ip of detectIppan(plain)) if (!ippanMap.has(ip.member)) ippanMap.set(ip.member, ip);
 
       const speeches = splitSpeeches(raw);
-      const dateTag = pdf.date ? pdf.date.replace(/-/g, "") : key.split("_").slice(1).join("_");
+      const dateTag = key.slice(m.id.length + 1); // 本文は日付、目次はファイル名（scripts/lib/keys.mjs の textKey と同じ。目次に日付が付いていても本文と sid が重ならない）
       const day = [];
-      const isToc = /mokuji|目次/i.test(pdf.url + " " + (pdf.label || ""));
-      const date = pdf.date || (isToc ? null : dateFromName(m));
+      const isToc = isTocPdf(pdf);
+      const date = isToc ? null : (pdf.date || dateFromName(m));
       if (!isToc) days.push({ date, day });
       speeches.forEach((s, i) => {
         if (!s.text) return;
