@@ -95,8 +95,13 @@ const KIND = [
 ];
 export const guessKind = (t) => (KIND.find(([, re]) => re.test(t)) || ["その他"])[0];
 
+// 目次の件名の末尾にあるページ番号（空白のあとの「6」「15」「1－ 8」「１－８」など）を除く。
+// 点線（………）が無い行では件名のすぐ後ろにページ番号が来るため。空白の無い数字（「（第１号）」の号など）は残す。
+export const stripTocPageNo = (s) =>
+  s.replace(/[\s　]+[0-9０-９]+(?:[\s　]*[－―‐−-][\s　]*[0-9０-９]+)?[\s　]*$/, "");
+
 // 目次PDFのテキストから 議案番号→正式件名 を抽出する（最も正確なソース）。
-// 形式: 「目 次…第１号（…）…１．議第◯号 件名 ……… ページ」
+// 形式: 「目 次…第１号（…）…１．議第◯号 件名 ……… ページ」（点線が無く「件名 ページ」の行もある）
 export function extractGianFromToc(tocRaw) {
   const map = {};
   if (!tocRaw) return map;
@@ -106,7 +111,7 @@ export function extractGianFromToc(tocRaw) {
     const m = seg.match(/^１．\s*(議第|報第|議案第|選第|諮第|発議第|決議案第|請願第|陳情第)\s*([0-9０-９]+)\s*号\s*(.+)/);
     if (!m) continue;
     const no = `${m[1]}${toHalf(m[2])}号`;
-    let title = m[3]
+    let title = stripTocPageNo(m[3])
       .replace(/[…‥]+.*$/, "")
       .replace(/[0-9０-９]+[－-][0-9０-９]+.*$/, "")
       .replace(/〔.*$/, "")
