@@ -224,19 +224,25 @@
     "ippan": [
       {
         "member": "谷口智哉",
-        "theme": "",
+        "theme": "自治・住民参画",
         "seat": "3番",
         "topics": [
           {
             "n": 1,
             "title": "ともに創るまち",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "「ともに創るまち」における住民協働と成果とは何か",
+            "theme": "自治・住民参画",
+            "src": "bulletin"
           }
         ]
       },
       {
         "member": "福永晃仁",
-        "theme": "",
+        "theme": "子育て・教育",
         "seat": "2番",
         "style": "一問一答",
         "topics": [
@@ -244,12 +250,24 @@
             "n": 1,
             "title": "ひとづくりと青年教育",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "ひとづくりと青年教育",
+            "theme": "子育て・教育",
+            "src": "bulletin"
+          },
+          {
+            "n": 2,
+            "title": "観光振興と住民の暮らし",
+            "theme": "産業・観光・文化財",
+            "src": "bulletin"
           }
         ]
       },
       {
         "member": "後藤勇樹",
-        "theme": "",
+        "theme": "交通・公共交通",
         "seat": "11番",
         "style": "分割",
         "topics": [
@@ -257,12 +275,30 @@
             "n": 1,
             "title": "名神名阪連絡道路計画",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "名神名阪連絡道路の進捗と町内IC設置について問う",
+            "theme": "交通・公共交通",
+            "src": "bulletin"
+          },
+          {
+            "n": 2,
+            "title": "日野の新たな文化創出と滋賀DCへの取組みを問う",
+            "theme": "産業・観光・文化財",
+            "src": "bulletin"
+          },
+          {
+            "n": 3,
+            "title": "本年度から始まった「子ども・子育て支援金制度」について伺う",
+            "theme": "子育て・教育",
+            "src": "bulletin"
           }
         ]
       },
       {
         "member": "川東昭男",
-        "theme": "",
+        "theme": "農林業",
         "seat": "6番",
         "style": "分割",
         "topics": [
@@ -270,12 +306,24 @@
             "n": 1,
             "title": "農村下水道の公共下水道への接続",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "農村下水道の公共下水道への接続について",
+            "theme": "農林業",
+            "src": "bulletin"
+          },
+          {
+            "n": 2,
+            "title": "マイナンバーカードの普及・利活用について",
+            "theme": "行財政・行政運営",
+            "src": "bulletin"
           }
         ]
       },
       {
         "member": "錦戸由佳",
-        "theme": "",
+        "theme": "子育て・教育",
         "seat": "1番",
         "style": "一問一答",
         "topics": [
@@ -288,36 +336,60 @@
             "n": 7,
             "title": "情報活用能力の育成",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "子どもたちの学習環境について",
+            "theme": "子育て・教育",
+            "src": "bulletin"
           }
         ]
       },
       {
         "member": "西澤正治",
-        "theme": "",
+        "theme": "交通・公共交通",
         "seat": "13番",
         "topics": [
           {
             "n": 1,
             "title": "道路整備",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "道路整備について",
+            "theme": "交通・公共交通",
+            "src": "bulletin"
           }
         ]
       },
       {
         "member": "髙橋源三郎",
-        "theme": "",
+        "theme": "人口・移住定住",
         "seat": "9番",
         "topics": [
           {
             "n": 1,
             "title": "若い世代が集まる同窓会に対する補助金制度",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "日野中学校卒業生の同窓会に町から補助金を",
+            "theme": "人口・移住定住",
+            "src": "bulletin"
+          },
+          {
+            "n": 2,
+            "title": "路肩に繁茂する雑草除去の管理責任者は誰か",
+            "theme": "交通・公共交通",
+            "src": "bulletin"
           }
         ]
       },
       {
         "member": "野矢貴之",
-        "theme": "",
+        "theme": "自治・住民参画",
         "seat": "7番",
         "style": "一問一答",
         "topics": [
@@ -325,12 +397,18 @@
             "n": 1,
             "title": "人権と福祉のまちづくり」政策",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "行政が主体的に役の整理に取り組むべきでは",
+            "theme": "自治・住民参画",
+            "src": "bulletin"
           }
         ]
       },
       {
         "member": "山本秀喜",
-        "theme": "",
+        "theme": "子育て・教育",
         "seat": "8番",
         "style": "一問一答",
         "topics": [
@@ -338,17 +416,43 @@
             "n": 1,
             "title": "こども家庭センターの運営等",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "「日野町こども家庭センター」の運営は",
+            "theme": "子育て・教育",
+            "src": "bulletin"
+          },
+          {
+            "n": 2,
+            "title": "生きづらさを抱える子どもたちをみんなで支え合う町づくりは",
+            "theme": "子育て・教育",
+            "src": "bulletin"
           }
         ]
       },
       {
         "member": "松田洋子",
-        "theme": "",
-        "seat": "4番"
+        "theme": "子育て・教育",
+        "seat": "4番",
+        "topics": [
+          {
+            "n": 1,
+            "title": "中学校の給食無償化はどうなる",
+            "theme": "子育て・教育",
+            "src": "bulletin"
+          },
+          {
+            "n": 2,
+            "title": "燃油資材高騰による町内業者・福祉施設への影響と町の対応",
+            "theme": "産業・観光・文化財",
+            "src": "bulletin"
+          }
+        ]
       },
       {
         "member": "加藤和幸",
-        "theme": "",
+        "theme": "環境",
         "seat": "10番",
         "topics": [
           {
@@ -360,24 +464,48 @@
             "n": 2,
             "title": "日野町林業センターの土日・祝日の貸し館停止",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "騒音・低周波公害の訴えとその対策",
+            "theme": "環境",
+            "src": "bulletin"
+          },
+          {
+            "n": 2,
+            "title": "林業センター休日貸室停止について",
+            "theme": "行財政・行政運営",
+            "src": "bulletin"
           }
         ]
       },
       {
         "member": "柚木記久雄",
-        "theme": "",
+        "theme": "人口・移住定住",
         "seat": "5番",
         "topics": [
           {
             "n": 1,
             "title": "日野町結婚新生活支援補助金",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "日野町結婚新生活支援補助金の制度利用拡大にむけて",
+            "theme": "人口・移住定住",
+            "src": "bulletin"
+          },
+          {
+            "n": 2,
+            "title": "綿向山冬季登山者の交通手段を考える",
+            "theme": "交通・公共交通",
+            "src": "bulletin"
           }
         ]
       },
       {
         "member": "中西佳子",
-        "theme": "",
+        "theme": "人口・移住定住",
         "seat": "12番",
         "style": "分割",
         "topics": [
@@ -390,6 +518,18 @@
             "n": 2,
             "title": "幼児教育・保育の充実",
             "src": "minutes"
+          },
+          {
+            "n": 1,
+            "title": "結婚支援の充実について",
+            "theme": "人口・移住定住",
+            "src": "bulletin"
+          },
+          {
+            "n": 2,
+            "title": "幼児教育・保育の充実について",
+            "theme": "子育て・教育",
+            "src": "bulletin"
           }
         ]
       }
