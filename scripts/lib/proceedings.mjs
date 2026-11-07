@@ -186,8 +186,8 @@ export function parseDay(speeches, { date = null, pdf = null, agenda = [] } = {}
     if (!sp.text) continue;
     if (isChair(sp.role)) {
       const t = squash(sp.text);
-      // 訂正が続けて複数人（議長が氏名だけ呼ぶ）なら挟まりを継続
-      if (aside !== undefined && !/^[^。]{1,12}君。$/.test(t)) { scene = aside; aside = undefined; }
+      // 訂正が続けて複数人（議長が氏名だけ呼ぶ）なら挟まりを継続。「次に、７番、奥平英雄君。」のように議席番号つきで議員を指名したら元の場面に戻す
+      if (aside !== undefined && !(/^[^。]{1,12}君。$/.test(t) && !/[0-9０-９]+番/.test(t))) { scene = aside; aside = undefined; }
       // 採決結果（同じ発言内の文脈議案を先に更新）
       const hits = [];
       for (const [re, act] of PHRASES) for (const m of t.matchAll(re)) hits.push([m.index, act]);
