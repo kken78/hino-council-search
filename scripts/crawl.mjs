@@ -21,6 +21,7 @@ function eraOf(name) {
   return { era: `${m[1]}${n === 1 ? "元" : n}年`, year };
 }
 function guessDate(href, label, fallbackYear) {
+  if (/mokuji|目次/i.test(href + " " + label)) return null; // 目次は日付を持たない（scripts/lib/keys.mjs の textKey と同じ理由）
   const f = href.match(/\/(\d{8})[^/]*\.pdf$/i);
   if (f) { const s = f[1]; return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`; }
   const md = label.match(/(\d{1,2})月(\d{1,2})日/);
