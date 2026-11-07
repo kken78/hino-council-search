@@ -82,6 +82,7 @@ dialog.thread::backdrop{background:rgba(20,28,40,.55)}
 .turn .tlabel{font-size:11.5px;font-weight:700;color:#2b4663;margin-right:6px}.turn.t-a .tlabel{color:#6b5a36}
 .turn .tbody-text{font-size:14px;white-space:pre-wrap;margin-top:4px;color:#26303f}
 .turn .tfoot{margin-top:5px;font-size:12px}
+.turn .tpara.pmark{background:#fff1b8;scroll-margin-top:80px}
 .thread.hide-chair .t-chair{display:none}
 .qmark{font-size:12px;font-weight:700;color:#2e6b46;background:#eafaf0;border-left:4px solid #2e6b46;border-radius:4px;padding:3px 10px;margin:12px 0 6px}
 .turn .tfull{display:none}.turn.open .tfull,.thread.show-full .tfull{display:inline}.turn.open .tshort,.thread.show-full .tshort{display:none}.thread.show-full .tmore{display:none}.tmore{font-size:12px;margin-top:3px}
@@ -296,8 +297,10 @@ let _qT;$("#q").addEventListener("input",()=>{clearTimeout(_qT);_qT=setTimeout(r
 // ── やりとり表示（一般質問・議案質疑の範囲を発言順に） ──
 // 長い発言は冒頭だけ表示し、流れ（質問→答弁→再質問）を追いやすくする。「全文で表示」か各発言の「続きを読む」で展開。
 const CUT=240;
-function turnText(t,open){if(t.length<=CUT+40||open)return '<div class="tbody-text">'+esc(t)+'</div>';return '<div class="tbody-text"><span class="tshort">'+esc(t.slice(0,CUT))+'…</span><span class="tfull">'+esc(t)+'</span></div><button type="button" class="more tmore" aria-expanded="false">続きを読む（全'+t.length+'字）</button>';}
-function openThread(sg,focusSid){
+// 共有リンクの p（段落の番号）：本文を改行で分けた塊を1から数え、その段落に印を付ける。段落が1つしか無い本文や範囲外の番号は null（印を付けない）。
+function paraHTML(t,p){const parts=t.split(/(\n+)/);let n=0;for(let i=0;i<parts.length;i+=2)if(parts[i].trim())n++;if(n<2||!(p>=1&&p<=n))return null;let h="",c=0;for(let i=0;i<parts.length;i++){if(i%2||!parts[i].trim()){h+=esc(parts[i]);continue;}c++;h+='<span class="tpara'+(c===p?' pmark':'')+'" data-p="'+c+'">'+esc(parts[i])+'</span>';}return h;}
+function turnText(t,open,para){if(open&&para){const ph=paraHTML(t,para);if(ph)return '<div class="tbody-text">'+ph+'</div>';}if(t.length<=CUT+40||open)return '<div class="tbody-text">'+esc(t)+'</div>';return '<div class="tbody-text"><span class="tshort">'+esc(t.slice(0,CUT))+'…</span><span class="tfull">'+esc(t)+'</span></div><button type="button" class="more tmore" aria-expanded="false">続きを読む（全'+t.length+'字）</button>';}
+function openThread(sg,focusSid,opt){
   const dlg=$("#thread"),m=toc.find(t=>t.id===sg._mid)||{name:""};const labels=turnLabels(sg);
   const bl=sg.bills&&sg.bills.length?sg.bills.slice(0,3).join("、")+(sg.bills.length>3?" ほか"+(sg.bills.length-3)+"件":""):"";
   $("#threadTitle").textContent=sg.kind==="vote"?"採決："+bl:(sg.member+(sg.seat?"（"+sg.seat+"）":"")+" の"+sceneLabel(sg));
@@ -311,16 +314,52 @@ function openThread(sg,focusSid){
   for(let k=sg._a;k<=sg._b;k++){const e=index[k];if(!e.text)continue;const chair=isChairRole(e.role),tl=labels.get(e.sid);
     if(qmark.has(e.sid))h+=qmark.get(e.sid).map(x=>'<div class="qmark" title="議会だよりの質問と会議録の発言を機械的に対応付けた目安です">'+esc(x)+'</div>').join("");const cls=chair?"t-chair":(tl&&tl.t==="a"?"t-a":"t-q");const cat=roleCat(e),bc=RB[cat]?RB[cat][0]:"";
     if(chair&&sg.kind!=="vote"){h+='<div class="turn t-chair" data-sid="'+esc(e.sid)+'">議長：'+esc(e.text)+'</div>';continue;}
-    h+='<div class="turn '+cls+(e.sid===focusSid?' focus':'')+'" data-sid="'+esc(e.sid)+'"><div>'+(tl&&tl.label?'<span class="tlabel">'+tl.label+'</span>':'')+'<b>'+esc(e.name)+'</b>'+(cat?'<span class="rolebadge '+bc+'">'+cat+'</span>':'')+(e.role?'<span class="rolename">'+esc(e.role)+'</span>':'')+'</div>'+turnText(e.text,e.sid===focusSid)+(e.pdf?'<div class="tfoot"><a class="pdflink" href="'+e.pdf+'" target="_blank" rel="noreferrer">会議録PDFを開く</a></div>':'')+'</div>';}
+    h+='<div class="turn '+cls+(e.sid===focusSid?' focus':'')+'" data-sid="'+esc(e.sid)+'"><div>'+(tl&&tl.label?'<span class="tlabel">'+tl.label+'</span>':'')+'<b>'+esc(e.name)+'</b>'+(cat?'<span class="rolebadge '+bc+'">'+cat+'</span>':'')+(e.role?'<span class="rolename">'+esc(e.role)+'</span>':'')+'</div>'+turnText(e.text,e.sid===focusSid,e.sid===focusSid&&opt?opt.p:null)+(e.pdf?'<div class="tfoot"><a class="pdflink" href="'+e.pdf+'" target="_blank" rel="noreferrer">会議録PDFを開く</a></div>':'')+'</div>';}
   $("#threadBody").innerHTML=h;dlg.classList.add("hide-chair");dlg.classList.remove("show-full");
   $("#showFull").onchange=ev=>dlg.classList.toggle("show-full",ev.target.checked);
   $("#showChair").onchange=ev=>dlg.classList.toggle("hide-chair",!ev.target.checked);
-  threadKey=sg.kind==="vote"?"v:"+sg.sid:sg.from;threadFocus=focusSid||null;syncHash();
+  threadKey=sg.kind==="vote"?"v:"+sg.sid:sg.from;threadFocus=focusSid||null;speechKey=opt?opt.sid:null;speechPara=opt?opt.p:null;syncHash();
+  showDialog(focusSid);
+}
+function showDialog(focusSid){const dlg=$("#thread");
   if(dlg.showModal){if(!dlg.open)dlg.showModal();}else dlg.setAttribute("open","");
-  const f=focusSid&&$("#threadBody").querySelector('.turn[data-sid="'+focusSid+'"]');$("#threadBody").parentElement.scrollTop=0;if(f)f.scrollIntoView({block:"center"});
+  const f=focusSid&&$("#threadBody").querySelector('.turn[data-sid="'+focusSid+'"]');$("#threadBody").parentElement.scrollTop=0;
+  const pm=f&&f.querySelector(".pmark");if(pm)pm.scrollIntoView({block:"start"});else if(f)f.scrollIntoView({block:"center"});
+}
+// ── 発言を1件開く（共有リンクの sid）──
+// やりとり（場面）に入る発言はそのやりとりを開き、入らない発言（施政方針・決算の説明など）は同じ会議・同じ日の前後の発言とあわせて出す。
+const CTX=2;   // 前後に出す発言の数（議長の進行発言は数えない）
+const dayKey=e=>e.meetingId+"|"+e.sid.slice(0,e.sid.lastIndexOf("_"));
+function openSpeech(sid,para){const k=posOf.get(sid);
+  if(k==null){if(DATA.loading&&!DATA.loading.done){speechKey=sid;speechPara=para;threadKey=threadFocus=null;return;}return speechNotFound(sid);}   // まだ読み込んでいない年：読み込み後に開く
+  const e=index[k],opt={sid,p:para};
+  if(voteBySid.has(sid))return openThread(voteBySid.get(sid),sid,opt);
+  if(e._seg)return openThread(e._seg,sid,opt);
+  openContext(k,para);}
+function openContext(k,para){
+  const e=index[k],dk=dayKey(e),m=toc.find(t=>t.id===e.meetingId)||{name:e.meeting};
+  const near=step=>{let j=k,n=0,last=k;while(n<CTX){j+=step;const x=index[j];if(!x||dayKey(x)!==dk)break;last=j;if(x.text&&!isChairRole(x.role))n++;}return last;};
+  const a=near(-1),b=near(1);
+  $("#threadTitle").textContent=e.name+(e.role?"（"+e.role+"）":"")+" の発言";
+  $("#threadSub").textContent=[m.name,e.date].filter(Boolean).join("　|　");
+  let h='<div class="ttools"><span>前後の発言（前後'+CTX+'件まで）</span><label><input type="checkbox" id="showFull"> 全文で表示</label><label><input type="checkbox" id="showChair"> 議長の進行発言も表示</label></div>';
+  for(let j=a;j<=b;j++){const x=index[j];if(!x.text)continue;const fo=j===k,chair=isChairRole(x.role);
+    if(chair&&!fo){h+='<div class="turn t-chair" data-sid="'+esc(x.sid)+'">議長：'+esc(x.text)+'</div>';continue;}
+    const cat=roleCat(x),bc=RB[cat]?RB[cat][0]:"";
+    h+='<div class="turn '+(cat==="当局"?"t-a":"t-q")+(fo?' focus':'')+'" data-sid="'+esc(x.sid)+'"><div><b>'+esc(x.name)+'</b>'+(cat?'<span class="rolebadge '+bc+'">'+cat+'</span>':'')+(x.role?'<span class="rolename">'+esc(x.role)+'</span>':'')+'</div>'+turnText(x.text,fo,fo?para:null)+(x.pdf?'<div class="tfoot"><a class="pdflink" href="'+x.pdf+'" target="_blank" rel="noreferrer">会議録PDFを開く</a></div>':'')+'</div>';}
+  const dlg=$("#thread");$("#threadBody").innerHTML=h;dlg.classList.add("hide-chair");dlg.classList.remove("show-full");
+  $("#showFull").onchange=ev=>dlg.classList.toggle("show-full",ev.target.checked);
+  $("#showChair").onchange=ev=>dlg.classList.toggle("hide-chair",!ev.target.checked);
+  threadKey=threadFocus=null;speechKey=e.sid;speechPara=para;syncHash();
+  showDialog(e.sid);
+}
+function speechNotFound(sid){
+  $("#threadTitle").textContent="発言";$("#threadSub").textContent="";
+  $("#threadBody").innerHTML='<div class="empty">この発言は見つかりません（発言ID：'+esc(sid)+'）。</div>';
+  threadKey=threadFocus=null;speechKey=speechPara=null;syncHash();showDialog(null);
 }
 $("#threadClose").onclick=()=>{const d=$("#thread");if(d.close)d.close();else{d.removeAttribute("open");onThreadClosed();}};
-function onThreadClosed(){threadKey=null;threadFocus=null;syncHash();}
+function onThreadClosed(){threadKey=null;threadFocus=null;speechKey=null;speechPara=null;syncHash();}
 $("#thread").addEventListener("close",onThreadClosed);
 $("#threadLink").onclick=()=>copyLink(location.href);
 $("#thread").addEventListener("click",ev=>{if(ev.target===$("#thread")){$("#threadClose").click();return;}const b=ev.target.closest(".tmore");if(b){const tu=b.closest(".turn");const o=tu.classList.toggle("open");b.setAttribute("aria-expanded",o);b.textContent=o?"閉じる":"続きを読む";}});
@@ -397,17 +436,18 @@ function renderCross(){
 }
 
 // ── 共有リンク（URLの # 以降に表示状態を保存・復元） ──
-let curTab="search",threadKey=null,threadFocus=null,applying=false;
+let curTab="search",threadKey=null,threadFocus=null,speechKey=null,speechPara=null,applying=false;
 function linkFor(params){const p=new URLSearchParams(params);return location.href.split("#")[0]+"#"+p.toString();}
 function syncHash(){if(applying)return;const p=new URLSearchParams();p.set("tab",curTab);
   if(curTab==="search"){const q=$("#q").value.trim();if(q)p.set("q",q);const f=readFilters();for(const k of ["meeting","speaker","role","type","scene"])if(f[k])p.set(k,f[k]);if($("#fSort").value!=="date")p.set("sort",$("#fSort").value);}
   if(curTab==="list"){p.set("view",crossView);if(crossYear)p.set("year",crossYear);if(crossQ)p.set("cq",crossQ);}
   if((curTab==="gian"||curTab==="list")&&openBill)p.set("bill",openBill);
-  if(threadKey){p.set("thread",threadKey);if(threadFocus)p.set("focus",threadFocus);}
+  if(speechKey){p.set("sid",speechKey);if(speechPara)p.set("p",speechPara);}
+  else if(threadKey){p.set("thread",threadKey);if(threadFocus)p.set("focus",threadFocus);}
   const h="#"+p.toString();if(location.hash!==h)history.replaceState(null,"",h);}
 function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),1800);}
 function copyLink(url){const done=()=>toast("リンクをコピーしました");if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(url).then(done,()=>window.prompt("このリンクをコピーしてください",url));else window.prompt("このリンクをコピーしてください",url);}
-function applyHash(){const p=new URLSearchParams(location.hash.slice(1));if(!p.has("tab")&&!p.has("q")&&!p.has("thread")&&!p.has("bill"))return false;applying=true;
+function applyHash(){const p=new URLSearchParams(location.hash.slice(1));if(!p.has("tab")&&!p.has("q")&&!p.has("thread")&&!p.has("bill")&&!p.has("sid"))return false;applying=true;
   try{let tab=p.get("tab")||"search";if(!TABS[tab]||$(TABS[tab][0]).hidden)tab="search";
     if(tab==="search"){$("#q").value=p.get("q")||"";const set=(id,v)=>{const el=$(id);el.value=v||"";};set("#fMeeting",p.get("meeting"));set("#fSpeaker",p.get("speaker"));set("#fRole",p.get("role"));set("#fType",p.get("type"));set("#fScene",p.get("scene"));$("#fSort").value=p.get("sort")||"date";}
     if(tab==="list"){crossView=p.get("view")||"petition";crossYear=p.get("year")||"";crossQ=p.get("cq")||"";}
@@ -415,6 +455,7 @@ function applyHash(){const p=new URLSearchParams(location.hash.slice(1));if(!p.h
     const bill=p.get("bill");if(bill){if(tab!=="gian"&&tab!=="list")showTab("gian");const b=[...document.querySelectorAll("[data-bill]")].find(x=>x.dataset.bill===bill&&x.offsetParent);if(b){b.click();b.scrollIntoView({block:"center"});}}
     const th=p.get("thread");if(th){const sg=th.startsWith("v:")?voteBySid.get(th.slice(2)):segByFrom.get(th);if(sg)openThread(sg,p.get("focus")||null);
       else if(DATA.loading&&!DATA.loading.done){threadKey=th;threadFocus=p.get("focus")||null;}}   // まだ読み込んでいない年：読み込み後に開く
+    const sd=p.get("sid");if(sd&&!th){const pp=p.get("p");openSpeech(sd,/^[0-9]+$/.test(pp||"")?parseInt(pp,10):null);}
   }finally{applying=false;}
   syncHash();return true;}
 window.addEventListener("hashchange",()=>{applyHash();});
@@ -438,6 +479,7 @@ function addIndex(entries,info){
   const dlg=$("#thread");
   if(curTab==="search")render();else if(curTab==="gian")renderGian();else if(curTab==="list")renderCross();
   if(!dlg.open&&threadKey){const sg=threadKey.startsWith("v:")?voteBySid.get(threadKey.slice(2)):segByFrom.get(threadKey);if(sg)openThread(sg,threadFocus);else if(loading&&loading.done){threadKey=threadFocus=null;syncHash();}}   // 古い年のやりとりへの共有リンク
+  else if(!dlg.open&&speechKey)openSpeech(speechKey,speechPara);   // 古い年の発言への共有リンク
 }
 return {addIndex};
 }
