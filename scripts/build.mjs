@@ -49,7 +49,7 @@ for (const e of big.index) if (e.norm == null) e.norm = buildNormStr(e.text || "
 
 const TITLE = applySite("{{TITLE}}"), OFFLINE = (SITE.ui && SITE.ui.offline_file) || "会議録検索.html";
 const shape = (t) => t.replace(/<div class="note">[\s\S]*?<\/div>\n/, "")
-         .replace(/ <span style="font-size:12px;color:#9fb0c6">（プレビュー）<\/span>/, "")
+         .replace(/ <span class="pvmark">（プレビュー）<\/span>/, "")
          .replace(`<title>${TITLE}（プレビュー）</title>`, `<title>${TITLE}</title>`);
 const tpl = shape(inlineLabels(applySite(R("scripts/preview.tpl.html"))));
 // オンライン版だけ OGP のタグを入れる（site.config.json の ui.ogp。無ければ tpl と同じ）

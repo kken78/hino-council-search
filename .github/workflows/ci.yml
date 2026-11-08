@@ -1,6 +1,7 @@
 name: ci
 # PR・push のたびに、解析器のテスト・審議構造の精度チェック・MCP の構文・本番ビルドを確認する。
-# 外部パッケージ不要（Node 標準のみ）。
+# 外部パッケージ不要（Node 標準のみ）。文字の大きさの実寸の検査だけ、Playwright を作業用の場所に入れる（package.json は増やさない）。
+# あわせて、hino-portal の shared/ の文字の大きさの検査（静的検査と、幅 360px と 1024px での実寸）を走らせる。
 on:
   pull_request:
   push:
@@ -23,3 +24,25 @@ jobs:
         run: node --check mcp/hino-council-mcp.mjs
       - name: 本番ビルド（dist/online・オフラインHTML）
         run: node scripts/build.mjs
+
+      # 文字の大きさは hino-portal DESIGN.md 5.2（DESIGN.md ADR-1）。上の本番ビルドで作った dist/ に当てる。
+      # この画面は共通の部品（見出し・ナビ・フッター）を写していない（hino-portal DESIGN.md 8章）。
+      # check.py が出す共通の部品の問題（<title> の形、portal-shared のブロックが無い）は除き、ほかの問題が1件でもあれば止める。
+      - name: 文字の大きさ（hino-portal の shared/check.py --fonts）
+        run: |
+          git clone --depth 1 https://github.com/kken78/hino-portal.git /tmp/hino-portal
+          python3 /tmp/hino-portal/shared/check.py --fonts dist/online/index.html dist/*.html > /tmp/check.txt || true
+          cat /tmp/check.txt
+          test "$(grep -c '^dist/' /tmp/check.txt)" -eq 2
+          if grep '^  - ' /tmp/check.txt | grep -v -E '^  - (<title> の形が違う|portal-shared:(css|header|siblings|footer) のブロックが無い)'; then
+            echo "文字の大きさの問題がある"; exit 1
+          fi
+
+      # 実寸の検査はデータを埋め込んだオフライン版で行う（オンライン版は file:// ではデータを読み込めない）
+      - name: 実ブラウザでの文字の大きさと横のはみ出し（hino-portal の shared/check_mobile.mjs）
+        run: |
+          mkdir -p /tmp/pw && cd /tmp/pw
+          npm install --no-save --no-package-lock playwright@1.49.1
+          npx playwright install --with-deps chromium
+          cd "$GITHUB_WORKSPACE"
+          PLAYWRIGHT_MODULE=/tmp/pw/node_modules/playwright/index.mjs node /tmp/hino-portal/shared/check_mobile.mjs dist/*.html

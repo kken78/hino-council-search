@@ -46,7 +46,7 @@ export function applySite(tpl, { ogp = false } = {}) {
   const back = (ui.links || []).filter((l) => l.top).map((l) => `<a href="${esc(l.url)}" style="font-weight:700;margin-right:1em;white-space:nowrap">← ${esc(l.top_label || l.label)}</a>`).join("");
   return tpl
     .replaceAll("{{OGP}}", ogp ? ogpTags(tpl) : "")
-    .replaceAll("{{POSITION_TOP}}", pos || back ? `<p class="posnote" style="font-size:12px;line-height:1.6;color:var(--slate);margin:8px 0 0">${back}${pos}</p>` : "")
+    .replaceAll("{{POSITION_TOP}}", pos || back ? `<p class="posnote">${back}${pos}</p>` : "")
     .replaceAll("{{POSITION_NOTE}}", pos ? `${pos}<br>` : "")
     .replaceAll("{{TITLE}}", esc(ui.title || "会議録 横断検索"))
     .replaceAll("{{EYEBROW}}", esc(ui.eyebrow || ""))
