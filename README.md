@@ -173,6 +173,7 @@
 ```
 gikai-search/
 ├─ README.md / DEV_NOTES.md                # 仕様 / 実装・運用メモ
+├─ DESIGN.md                              # 画面の設計の決定の記録（ADR）
 ├─ package.json / LICENSE / LICENSE-DATA.md / .gitignore
 ├─ site.config.json                       # 自治体ごとの設定（巡回先・ページ形式・表題・出典など。他自治体は FORK.md）
 ├─ FORK.md                                # 他の自治体で使う手順

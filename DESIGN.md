@@ -1,0 +1,18 @@
+# DESIGN.md
+
+会議録 横断検索の画面（`scripts/preview.tpl.html` と、それから `scripts/build.mjs` が作る `dist/`）の設計の決定を記録する。仕様は README.md、実装と運用のメモは DEV_NOTES.md にある。
+
+## ADR-1 文字の大きさを hino-portal DESIGN.md 5.2 に合わせる
+
+決定 2026-11-08。hino-portal DESIGN.md 9.2 の段階3による。議会系のページは構造と配色を独立させるが、文字の下限は共通とする（hino-portal DESIGN.md 8章）。
+
+- 文字の大きさは、日野町データポータルの共通の部品のトークン5つ（`--portal-fs-sub` 14px、`--portal-fs` 16px、`--portal-fs-h1` 18px、`--portal-fs-h3` 20px、`--portal-fs-h2` 24px）だけを使う。14px より小さい文字は作らない。
+- この画面は共通の部品（見出し・ナビ・フッター）を写していない。段階3では共通の部品を新しく入れず、5つのトークンだけを `scripts/preview.tpl.html` の `:root` に置く。値は hino-portal の shared/shell.css と同じにする。
+- 直接の px の指定（`scripts/preview.tpl.html` の CSS 71 か所、style 属性 1 か所、`scripts/lib/site.mjs` の style 属性 1 か所。10.5〜13.5px が 55 か所）をやめ、トークンの参照にする。値は、いまの値以上でいちばん近い段階にする。14px 未満と 14px は 14px、14.5〜16px は 16px、17〜18px は 18px、19〜20px は 20px、23px（ページの題）は 24px。
+- 狭い画面での上書き（ページの題 19px、表 12.5px、補足の行 12px など）も同じ決め方でトークンにし、狭い画面で 14px より小さくしない。
+- ページ上部の位置づけの行（`site.mjs` が作る `p.posnote`）と、プレビューの印（`span.pvmark`）は、style 属性の大きさの指定をやめてクラスにする。`build.mjs` がプレビューの印を消すときの文字の並びも合わせて直す。
+- 幅が足りない箇所は、文字を小さくせずに配置で解く（shiga-hino-plans DESIGN.md ADR-8 の表）。
+  - 一般質問のカード（議案・一般質問の画面）：問いごとに方式が違う議員の質問項目では、「質問方式：…」の前に全角の空白を置いていた。14px にすると、行の終わりに残った全角の空白がカードの内側の幅から 14px はみ出した（幅 360px で 11 か所）。全角の空白をやめ、左の余白（1em）にした。
+  - 表は、幅 560px 以下で横スクロール（議案の表はカード型）にする既存の配置のままで、14px にしてもページは横にはみ出さない。
+- MCP の道具とデータの台帳は変えない。
+- 検査は、`node scripts/build.mjs` で dist/ を作ってから、hino-portal の `shared/check.py --fonts`（静的検査）と `shared/check_mobile.mjs`（幅 360px と 1024px での実寸の検査）を CI（`.github/workflows/ci.yml`）で走らせる。実寸の検査は、データを埋め込んだオフライン版（`dist/日野町議会-会議録検索.html`）で行う。オンライン版（`dist/online/index.html`）は `file://` で開くとデータを読み込めないので、静的検査だけを当てる。check.py の共通の部品の検査（`<title>` の形と、`portal-shared` のブロック）はこの画面には当てはまらないので、文字の大きさの検査の結果だけで合否を決める。
