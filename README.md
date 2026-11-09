@@ -89,7 +89,7 @@
 - **絞り込み**：年（西暦／元号）・会議種別（定例会／臨時会）・発言者・期間（開会日 from–to）。
 - **結果表示**：該当会議録数／該当発言数／ヒット箇所数を表示。本文中のヒット語を前後文脈つきでハイライトし、該当日のPDFへ遷移（ローカルは手元PDF、本番はオンラインURL）。
 - **会議ページ導線**：会議録一覧から各会議の「本会議のご案内」ページへ遷移（本番のみ）。
-- **並び順**：開催日の新しい順（既定）／関連度（ヒット数）。
+- **並び順**：開催日の新しい順（既定）／開催日の古い順／関連度（ヒット数）。
 
 ### 1.2 表記ゆれ吸収（正規化）
 照合の前に、本文とクエリの双方を同一の正規形へ変換する。本文側の正規形はビルド時に `norm` として事前計算し、実行時の正規化コストをゼロにする。
@@ -119,7 +119,7 @@
 | パラメータ | 意味 | 例 |
 |---|---|---|
 | `tab` | `search`（発言を検索）／`gian`（議案・一般質問）／`list`（審議の一覧）／`toc` | `#tab=list` |
-| `q`・`meeting`・`speaker`・`role`・`type`・`scene`・`sort` | 発言検索の条件（`scene` は `ippan`／`shitsugi`／`report`／`debate`／`proposal`／`other`） | `#tab=search&q=国民健康保険&scene=debate` |
+| `q`・`meeting`・`speaker`・`role`・`type`・`scene`・`sort` | 発言検索の条件（`scene` は `ippan`／`shitsugi`／`report`／`debate`／`proposal`／`other`。`sort` は `oldest`（古い会議順）か `relevance`（関連度）で、無いときは新しい会議順） | `#tab=search&q=国民健康保険&scene=debate` |
 | `view`・`year`・`cq` | 審議の一覧の種類（`petition`／`debated`／`rejected`／`split`）・年・件名の絞り込み | `#tab=list&view=rejected&year=2025` |
 | `bill` | 議案の審議の経過を開く（`会議ID|議案番号`） | `#tab=gian&bill=0000008942|議第105号` |
 | `thread`・`focus` | 一般質問・議案質疑のやりとりを開く（場面の最初の発言ID、強調する発言ID） | `#thread=0000008942_20260306_0003` |

@@ -160,7 +160,7 @@ footer{margin:34px 0 16px;font-size:var(--portal-fs-sub);color:var(--slate);bord
       <label class="fcol">区分<select id="fRole"><option value="">議員・当局すべて</option><option value="議員">議員</option><option value="当局">当局（執行部）</option><option value="議長">議長</option></select></label>
       <label class="fcol" id="fSceneWrap" hidden>場面<select id="fScene"><option value="">すべての場面</option><option value="ippan">一般質問</option><option value="shitsugi">議案質疑</option><option value="report">委員長報告</option><option value="debate">討論</option><option value="proposal">提案説明</option><option value="other">その他（議事進行など）</option></select></label>
       <label class="fcol">種別<select id="fType"><option value="">すべて</option><option>定例会</option><option>臨時会</option></select></label>
-      <label class="fcol">並び<select id="fSort"><option value="date">新しい会議順</option><option value="relevance">関連度</option></select></label>
+      <label class="fcol">並び<select id="fSort"><option value="date">新しい会議順</option><option value="oldest">古い会議順</option><option value="relevance">関連度</option></select></label>
     </div>
   </div>
   <div id="loadnote" class="note" role="status" aria-live="polite" hidden></div>
@@ -278,7 +278,7 @@ function render(){
   syncHash();
   if(!active){$("#meta").innerHTML="";$("#results").innerHTML='<div class="empty-guide"><b>キーワードを入力</b>するか、上の「よく検索される語」・絞り込みで探せます。<br>収録：全文検索 '+index.length+' 発言／'+toc.filter(t=>t.indexed).length+' 会議　｜　目次カタログ '+toc.length+' 会議</div>';return;}
   const r=search(index,q,f);const sort=$("#fSort").value;
-  r.out.sort((a,b)=>sort==="relevance"?b.score-a.score||(b.e.date||"").localeCompare(a.e.date||""):(b.e.date||"").localeCompare(a.e.date||"")||b.score-a.score);
+  r.out.sort((a,b)=>sort==="relevance"?b.score-a.score||(b.e.date||"").localeCompare(a.e.date||""):sort==="oldest"?(!a.e.date)-(!b.e.date)||(a.e.date||"").localeCompare(b.e.date||"")||b.score-a.score:(b.e.date||"").localeCompare(a.e.date||"")||b.score-a.score);
   curResults=r.out;curPosAlts=r.posAlts;page=0;
   $("#meta").innerHTML='<div class="resmeta"><div class="count" role="status" aria-live="polite"><b>'+r.out.length+'</b> 件 <span class="small">（会議録 '+r.meetingCount+' 件'+(q.trim()?'／ヒット '+r.hitCount:'')+'）</span></div><span><button class="clearbtn" id="copySearch">この検索のリンクをコピー</button> <button class="clearbtn" id="clearAll">× 条件をクリア</button></span></div>';
   $("#copySearch").onclick=()=>copyLink(location.href);
