@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-07",
+  "generatedAt": "2026-11-09",
   "source": "curated(dict/highlight-themes.json)",
   "note": "日野町議会 会議録(68会議/32,272発言)を分析。政策体系順に配列。数値は議員発言の実データ集計。",
   "label": "議会で議論になっているテーマ",
