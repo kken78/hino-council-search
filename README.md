@@ -735,6 +735,7 @@ npm run build       # dist/日野町議会-会議録検索.html（オフライ�
 主な環境変数
 - `HINO_REFRESH=1` … `npm run extract` で、`data/text/` にあるものも含めて全件を作り直す。`data/pdf/<キー>.pdf` があればそれを使い、無いものだけ取得する（取得は1件ごとに1秒あける）。
   作り直したあとは `npm run index` を動かし、`node scripts/check-sid-stability.mjs HEAD` で発言ID が変わっていないことを確かめる。
+  画面を作ったあとは、`PLAYWRIGHT_MODULE=<playwright の index.mjs> node scripts/check-ui.mjs` で、手元版が外のサイトへ通信しないこと、決まった言葉（`scripts/test/search-fixtures.json`）で決まった発言が出ること、共有リンクでその発言が開くことを確かめる（CI でも実行する）。
 - `HINO_PDF_ONLINE=1` … preview.html のPDFリンクをローカル化せずURLのままにする。
 - `HINO_PDF_DIR=名前` … ローカルPDFフォルダ名（既定 `議事録本体`）。`fetch-pdfs.mjs` と揃える。
 - `HINO_HL_NOAI=1` / `HINO_HL_MODEL` / `HINO_HL_TOP` … 注目テーマ生成の制御。

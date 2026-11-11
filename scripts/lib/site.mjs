@@ -34,10 +34,12 @@ function ogpTags(tpl) {
 // ogp: true のときだけ {{OGP}} に OGP のタグを入れる（GitHub Pages のオンライン版だけ。オフライン版・preview.html は空）
 export function applySite(tpl, { ogp = false } = {}) {
   const ui = SITE.ui || {};
-  const links = (ui.links || []).map((l) => `<a href="${esc(l.url)}" target="_blank" rel="noreferrer" style="margin-left:8px">${esc(l.label)}</a>`).join("");
+  // 新しいタブで開くことを、読み上げにも伝える（hino-portal DESIGN.md 5.6）。手元版でも外のページを新しいタブで開くため、target は残す
+  const NEW_TAB = `<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">（新しいタブで開きます）</span>`;
+  const links = (ui.links || []).map((l) => `<a href="${esc(l.url)}" target="_blank" rel="noreferrer" style="margin-left:8px">${esc(l.label)}${NEW_TAB}</a>`).join("");
   // ライセンスの一文。リンクの文字は LICENSE-DATA.md（preview.html ではリンクを外して文字だけ残す：data-keep-text）
   const license = ui.license_note
-    ? `<br>${esc(ui.license_note)}${ui.license_url ? ` <a href="${esc(ui.license_url)}" target="_blank" rel="noreferrer" data-keep-text>LICENSE-DATA.md</a>` : ""}。`
+    ? `<br>${esc(ui.license_note)}${ui.license_url ? ` <a href="${esc(ui.license_url)}" target="_blank" rel="noreferrer" data-keep-text>LICENSE-DATA.md${NEW_TAB}</a>` : ""}。`
     : "";
   // システムの位置づけの一文（非公式の試作である等）。空なら上部・フッターとも何も出さない
   const pos = ui.position_note ? esc(ui.position_note) : "";
